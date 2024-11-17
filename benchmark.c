@@ -12,9 +12,6 @@
 #define MIN(x,y) (((x) < (y) ? (x) : (y)))
 #define SORT_CMP(x, y) ((x) - (y))
 #define SORT_CSWAP(x, y) {SORT_TYPE _sort_swap_temp = MAX((x), (y)); (x) = MIN((x),(y)); (y) = _sort_swap_temp;}
-#ifdef SET_SORT_EXTRA
-#define SORT_EXTRA
-#endif
 #include "sort.h"
 
 /* Used to control the stress test */
@@ -141,18 +138,10 @@ int main(void) {
   \
   platform_name(platform);
   TEST_STDLIB(qsort);
-#if !defined(__linux__) && !defined(__CYGWIN__)
-  TEST_STDLIB(heapsort);
-  TEST_STDLIB(mergesort);
-#endif
+
   TEST_SORT_H(quick_sort);
   TEST_SORT_H(merge_sort);
   TEST_SORT_H(heap_sort);
-#ifdef SET_SORT_EXTRA
-  TEST_SORT_H(grail_sort);
-  TEST_SORT_H(sqrt_sort);
-  TEST_SORT_H(rec_stable_sort);
-  TEST_SORT_H(grail_sort_dyn_buffer);
-#endif
+
   return 0;
 }

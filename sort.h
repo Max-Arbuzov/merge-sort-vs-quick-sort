@@ -38,10 +38,6 @@
 #define SORT_SAFE_CPY 0
 #endif
 
-#ifndef TIM_SORT_STACK_SIZE
-#define TIM_SORT_STACK_SIZE 128
-#endif
-
 #ifndef SORT_SWAP
 #define SORT_SWAP(x,y) {SORT_TYPE _sort_swap_temp = (x); (x) = (y); (y) = _sort_swap_temp;}
 #endif
@@ -1152,10 +1148,6 @@ SORT_DEF void HEAP_SORT(SORT_TYPE *dst, const size_t size) {
     end--;
   }
 }
-
-#ifdef SORT_EXTRA
-#include "sort_extra.h"
-#endif
 
 #undef SORT_SAFE_CPY
 #undef SORT_TYPE_CPY
