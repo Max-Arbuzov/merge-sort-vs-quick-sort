@@ -58,11 +58,6 @@
 #define MIN(x,y) (((x) < (y) ? (x) : (y)))
 #endif
 
-static int compute_minrun(const uint64_t);
-
-/* From http://oeis.org/classic/A102549 */
-static const uint64_t shell_gaps[48] = {1, 4, 10, 23, 57, 132, 301, 701, 1750, 4376, 10941, 27353, 68383, 170958, 427396, 1068491, 2671228, 6678071, 16695178, 41737946, 104344866, 260862166, 652155416, 1630388541, 4075971353LL, 10189928383LL, 25474820958LL, 63687052396LL, 159217630991LL, 398044077478LL, 995110193696LL, 2487775484241LL, 6219438710603LL, 15548596776508LL, 38871491941271LL, 97178729853178LL, 242946824632946LL, 607367061582366LL, 1518417653955916LL, 3796044134889791LL, 9490110337224478LL, 23725275843061196LL, 59313189607652991LL, 148282974019132478LL, 370707435047831196LL, 926768587619577991LL, 2316921469048944978LL, 5792303672622362446LL};
-
 #ifndef CLZ
 /* clang-only */
 #ifndef __has_builtin
@@ -120,30 +115,6 @@ static int clzll(uint64_t x) {
 #endif
 #endif
 
-static __inline int compute_minrun(const uint64_t size) {
-  const int top_bit = 64 - CLZ(size);
-  const int shift = MAX(top_bit, 6) - 6;
-  const int minrun = (int)(size >> shift);
-  const uint64_t mask = (1ULL << shift) - 1;
-
-  if (mask & size) {
-    return minrun + 1;
-  }
-
-  return minrun;
-}
-
-static __inline size_t rbnd(size_t len) {
-  int k;
-
-  if (len < 16) {
-    return 2;
-  }
-
-  k = 62 - CLZ(len);
-  return 1ULL << ((2 * k) / 3);
-}
-
 #endif /* SORT_COMMON_H */
 
 #define SORT_CONCAT(x, y) x ## _ ## y
@@ -170,30 +141,15 @@ static __inline size_t rbnd(size_t len) {
 #define BINARY_INSERTION_SORT_START    SORT_MAKE_STR(binary_insertion_sort_start)
 #define BINARY_INSERTION_SORT          SORT_MAKE_STR(binary_insertion_sort)
 #define REVERSE_ELEMENTS               SORT_MAKE_STR(reverse_elements)
-#define COUNT_RUN                      SORT_MAKE_STR(count_run)
-#define CHECK_INVARIANT                SORT_MAKE_STR(check_invariant)
-#define TIM_SORT                       SORT_MAKE_STR(tim_sort)
-#define TIM_SORT_RESIZE                SORT_MAKE_STR(tim_sort_resize)
-#define TIM_SORT_MERGE                 SORT_MAKE_STR(tim_sort_merge)
-#define TIM_SORT_COLLAPSE              SORT_MAKE_STR(tim_sort_collapse)
 #define HEAP_SORT                      SORT_MAKE_STR(heap_sort)
 #define MEDIAN                         SORT_MAKE_STR(median)
 #define QUICK_SORT                     SORT_MAKE_STR(quick_sort)
 #define MERGE_SORT                     SORT_MAKE_STR(merge_sort)
 #define MERGE_SORT_RECURSIVE           SORT_MAKE_STR(merge_sort_recursive)
-#define MERGE_SORT_IN_PLACE            SORT_MAKE_STR(merge_sort_in_place)
-#define MERGE_SORT_IN_PLACE_RMERGE     SORT_MAKE_STR(merge_sort_in_place_rmerge)
-#define MERGE_SORT_IN_PLACE_BACKMERGE  SORT_MAKE_STR(merge_sort_in_place_backmerge)
-#define MERGE_SORT_IN_PLACE_FRONTMERGE SORT_MAKE_STR(merge_sort_in_place_frontmerge)
-#define MERGE_SORT_IN_PLACE_ASWAP      SORT_MAKE_STR(merge_sort_in_place_aswap)
-#define SHELL_SORT                     SORT_MAKE_STR(shell_sort)
 #define QUICK_SORT_PARTITION           SORT_MAKE_STR(quick_sort_partition)
 #define QUICK_SORT_RECURSIVE           SORT_MAKE_STR(quick_sort_recursive)
 #define HEAP_SIFT_DOWN                 SORT_MAKE_STR(heap_sift_down)
 #define HEAPIFY                        SORT_MAKE_STR(heapify)
-#define TIM_SORT_RUN_T                 SORT_MAKE_STR(tim_sort_run_t)
-#define TEMP_STORAGE_T                 SORT_MAKE_STR(temp_storage_t)
-#define PUSH_NEXT                      SORT_MAKE_STR(push_next)
 
 #ifndef MAX
 #define MAX(x,y) (((x) > (y) ? (x) : (y)))
@@ -205,19 +161,10 @@ static __inline size_t rbnd(size_t len) {
 #define SORT_CSWAP(x, y) { if(SORT_CMP((x),(y)) > 0) {SORT_SWAP((x),(y));}}
 #endif
 
-typedef struct {
-  size_t start;
-  size_t length;
-} TIM_SORT_RUN_T;
-
-
-SORT_DEF void SHELL_SORT(SORT_TYPE *dst, const size_t size);
 SORT_DEF void BINARY_INSERTION_SORT(SORT_TYPE *dst, const size_t size);
 SORT_DEF void HEAP_SORT(SORT_TYPE *dst, const size_t size);
 SORT_DEF void QUICK_SORT(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT(SORT_TYPE *dst, const size_t size);
-SORT_DEF void MERGE_SORT_IN_PLACE(SORT_TYPE *dst, const size_t size);
-SORT_DEF void TIM_SORT(SORT_TYPE *dst, const size_t size);
 SORT_DEF void BITONIC_SORT(SORT_TYPE *dst, const size_t size);
 
 /* The full implementation of a bitonic sort is not here. Since we only want to use
@@ -825,46 +772,6 @@ SORT_DEF void SORT_DELETE_BUFFER(SORT_TYPE* pointer) {
 #endif
 }
 
-
-/* Shell sort implementation based on Wikipedia article
-   http://en.wikipedia.org/wiki/Shell_sort
-*/
-SORT_DEF void SHELL_SORT(SORT_TYPE *dst, const size_t size) {
-  /* don't bother sorting an array of size 0 or 1 */
-  /* TODO: binary search to find first gap? */
-  int inci = 47;
-  size_t inc = shell_gaps[inci];
-  size_t i;
-
-  if (size <= 1) {
-    return;
-  }
-
-  while (inc > (size >> 1)) {
-    inc = shell_gaps[--inci];
-  }
-
-  while (1) {
-    for (i = inc; i < size; i++) {
-      SORT_TYPE temp = dst[i];
-      size_t j = i;
-
-      while ((j >= inc) && (SORT_CMP(dst[j - inc], temp) > 0)) {
-        dst[j] = dst[j - inc];
-        j -= inc;
-      }
-
-      dst[j] = temp;
-    }
-
-    if (inc == 1) {
-      break;
-    }
-
-    inc = shell_gaps[--inci];
-  }
-}
-
 /* Function used to do a binary search for binary insertion sort */
 static __inline size_t BINARY_INSERTION_FIND(SORT_TYPE *dst, const SORT_TYPE x,
     const size_t size) {
@@ -943,225 +850,6 @@ SORT_DEF void BINARY_INSERTION_SORT(SORT_TYPE *dst, const size_t size) {
   }
 
   BINARY_INSERTION_SORT_START(dst, 1, size);
-}
-
-/* In-place mergesort */
-SORT_DEF void MERGE_SORT_IN_PLACE_ASWAP(SORT_TYPE * dst1, SORT_TYPE * dst2, size_t len) {
-  do {
-    SORT_SWAP(*dst1, *dst2);
-    dst1++;
-    dst2++;
-  } while (--len);
-}
-
-SORT_DEF void MERGE_SORT_IN_PLACE_FRONTMERGE(SORT_TYPE *dst1, size_t l1, SORT_TYPE *dst2,
-    size_t l2) {
-  SORT_TYPE *dst0 = dst2 - l1;
-
-  if (SORT_CMP(dst1[l1 - 1], dst2[0]) <= 0) {
-    MERGE_SORT_IN_PLACE_ASWAP(dst1, dst0, l1);
-    return;
-  }
-
-  do {
-    while (SORT_CMP(*dst2, *dst1) > 0) {
-      SORT_SWAP(*dst1, *dst0);
-      dst1++;
-      dst0++;
-
-      if (--l1 == 0) {
-        return;
-      }
-    }
-
-    SORT_SWAP(*dst2, *dst0);
-    dst2++;
-    dst0++;
-  } while (--l2);
-
-  do {
-    SORT_SWAP(*dst1, *dst0);
-    dst1++;
-    dst0++;
-  } while (--l1);
-}
-
-SORT_DEF size_t MERGE_SORT_IN_PLACE_BACKMERGE(SORT_TYPE * dst1, size_t l1, SORT_TYPE * dst2,
-    size_t l2) {
-  size_t res;
-  SORT_TYPE *dst0 = dst2 + l1;
-
-  if (SORT_CMP(dst1[1 - l1], dst2[0]) >= 0) {
-    MERGE_SORT_IN_PLACE_ASWAP(dst1 - l1 + 1, dst0 - l1 + 1, l1);
-    return l1;
-  }
-
-  do {
-    while (SORT_CMP(*dst2, *dst1) < 0) {
-      SORT_SWAP(*dst1, *dst0);
-      dst1--;
-      dst0--;
-
-      if (--l1 == 0) {
-        return 0;
-      }
-    }
-
-    SORT_SWAP(*dst2, *dst0);
-    dst2--;
-    dst0--;
-  } while (--l2);
-
-  res = l1;
-
-  do {
-    SORT_SWAP(*dst1, *dst0);
-    dst1--;
-    dst0--;
-  } while (--l1);
-
-  return res;
-}
-
-/* merge dst[p0..p1) by buffer dst[p1..p1+r) */
-SORT_DEF void MERGE_SORT_IN_PLACE_RMERGE(SORT_TYPE *dst, size_t len, size_t lp, size_t r) {
-  size_t i, lq;
-  int cv;
-
-  if (SORT_CMP(dst[lp], dst[lp - 1]) >= 0) {
-    return;
-  }
-
-  lq = lp;
-
-  for (i = 0; i < len; i += r) {
-    /* select smallest dst[p0+n*r] */
-    size_t q = i, j;
-
-    for (j = lp; j <= lq; j += r) {
-      cv = SORT_CMP(dst[j], dst[q]);
-
-      if (cv == 0) {
-        cv = SORT_CMP(dst[j + r - 1], dst[q + r - 1]);
-      }
-
-      if (cv < 0) {
-        q = j;
-      }
-    }
-
-    if (q != i) {
-      MERGE_SORT_IN_PLACE_ASWAP(dst + i, dst + q, r); /* swap it with current position */
-
-      if (q == lq && q < (len - r)) {
-        lq += r;
-      }
-    }
-
-    if (i != 0 && SORT_CMP(dst[i], dst[i - 1]) < 0) {
-      MERGE_SORT_IN_PLACE_ASWAP(dst + len, dst + i, r); /* swap current position with buffer */
-      MERGE_SORT_IN_PLACE_BACKMERGE(dst + (len + r - 1), r, dst + (i - 1),
-                                    r);  /* buffer :merge: dst[i-r..i) -> dst[i-r..i+r) */
-    }
-
-    if (lp == i) {
-      lp += r;
-    }
-  }
-}
-
-/* In-place Merge Sort implementation. (c)2012, Andrey Astrelin, astrelin@tochka.ru */
-SORT_DEF void MERGE_SORT_IN_PLACE(SORT_TYPE *dst, const size_t len) {
-  /* don't bother sorting an array of size <= 1 */
-  size_t r = rbnd(len);
-  size_t lr = (len / r - 1) * r;
-  SORT_TYPE *dst1 = dst - 1;
-  size_t p, m, q, q1, p0;
-
-  if (len <= 1) {
-    return;
-  }
-
-  if (len <= SMALL_SORT_BND) {
-    SMALL_SORT(dst, len);
-    return;
-  }
-
-  for (p = 2; p <= lr; p += 2) {
-    dst1 += 2;
-
-    if (SORT_CMP(dst1[0], dst1[-1]) < 0) {
-      SORT_SWAP(dst1[0], dst1[-1]);
-    }
-
-    if (p & 2) {
-      continue;
-    }
-
-    m = len - p;
-    q = 2;
-
-    while ((p & q) == 0) {
-      if (SORT_CMP(dst1[1 - q], dst1[-(int) q]) < 0) {
-        break;
-      }
-
-      q *= 2;
-    }
-
-    if (p & q) {
-      continue;
-    }
-
-    if (q < m) {
-      p0 = len - q;
-      MERGE_SORT_IN_PLACE_ASWAP(dst + p - q, dst + p0, q);
-
-      for (;;) {
-        q1 = 2 * q;
-
-        if ((q1 > m) || (p & q1)) {
-          break;
-        }
-
-        p0 = len - q1;
-        MERGE_SORT_IN_PLACE_FRONTMERGE(dst + (p - q1), q, dst + p0 + q, q);
-        q = q1;
-      }
-
-      MERGE_SORT_IN_PLACE_BACKMERGE(dst + (len - 1), q, dst1 - q, q);
-      q *= 2;
-    }
-
-    q1 = q;
-
-    while (q1 > m) {
-      q1 /= 2;
-    }
-
-    while ((q & p) == 0) {
-      q *= 2;
-      MERGE_SORT_IN_PLACE_RMERGE(dst + (p - q), q, q / 2, q1);
-    }
-  }
-
-  q1 = 0;
-
-  for (q = r; q < lr; q *= 2) {
-    if ((lr & q) != 0) {
-      q1 += q;
-
-      if (q1 != q) {
-        MERGE_SORT_IN_PLACE_RMERGE(dst + (lr - q1), q1, q, r);
-      }
-    }
-  }
-
-  m = len - lr;
-  MERGE_SORT_IN_PLACE(dst + lr, m);
-  MERGE_SORT_IN_PLACE_ASWAP(dst, dst + lr, m);
-  m += MERGE_SORT_IN_PLACE_BACKMERGE(dst + (m - 1), m, dst + (lr - 1), lr - m);
-  MERGE_SORT_IN_PLACE(dst, m);
 }
 
 /* Standard merge sort */
@@ -1413,314 +1101,6 @@ static __inline void REVERSE_ELEMENTS(SORT_TYPE *dst, size_t start, size_t end) 
   }
 }
 
-static size_t COUNT_RUN(SORT_TYPE *dst, const size_t start, const size_t size) {
-  size_t curr;
-
-  if (size - start == 1) {
-    return 1;
-  }
-
-  if (start >= size - 2) {
-    if (SORT_CMP(dst[size - 2], dst[size - 1]) > 0) {
-      SORT_SWAP(dst[size - 2], dst[size - 1]);
-    }
-
-    return 2;
-  }
-
-  curr = start + 2;
-
-  if (SORT_CMP(dst[start], dst[start + 1]) <= 0) {
-    /* increasing run */
-    while (1) {
-      if (curr == size - 1) {
-        break;
-      }
-
-      if (SORT_CMP(dst[curr - 1], dst[curr]) > 0) {
-        break;
-      }
-
-      curr++;
-    }
-
-    return curr - start;
-  } else {
-    /* decreasing run */
-    while (1) {
-      if (curr == size - 1) {
-        break;
-      }
-
-      if (SORT_CMP(dst[curr - 1], dst[curr]) <= 0) {
-        break;
-      }
-
-      curr++;
-    }
-
-    /* reverse in-place */
-    REVERSE_ELEMENTS(dst, start, curr - 1);
-    return curr - start;
-  }
-}
-
-static int CHECK_INVARIANT(TIM_SORT_RUN_T *stack, const int stack_curr) {
-  size_t A, B, C;
-
-  if (stack_curr < 2) {
-    return 1;
-  }
-
-  if (stack_curr == 2) {
-    const size_t A1 = stack[stack_curr - 2].length;
-    const size_t B1 = stack[stack_curr - 1].length;
-
-    if (A1 <= B1) {
-      return 0;
-    }
-
-    return 1;
-  }
-
-  A = stack[stack_curr - 3].length;
-  B = stack[stack_curr - 2].length;
-  C = stack[stack_curr - 1].length;
-
-  if ((A <= B + C) || (B <= C)) {
-    return 0;
-  }
-
-  return 1;
-}
-
-typedef struct {
-  size_t alloc;
-  SORT_TYPE *storage;
-} TEMP_STORAGE_T;
-
-static void TIM_SORT_RESIZE(TEMP_STORAGE_T *store, const size_t new_size) {
-  if ((store->storage == NULL) || (store->alloc < new_size)) {
-    SORT_TYPE *tempstore = (SORT_TYPE *)realloc(store->storage, new_size * sizeof(SORT_TYPE));
-
-    if (tempstore == NULL) {
-      fprintf(stderr, "Error allocating temporary storage for tim sort: need %lu bytes",
-              (unsigned long)(sizeof(SORT_TYPE) * new_size));
-      exit(1);
-    }
-
-    store->storage = tempstore;
-    store->alloc = new_size;
-  }
-}
-
-static void TIM_SORT_MERGE(SORT_TYPE *dst, const TIM_SORT_RUN_T *stack, const int stack_curr,
-                           TEMP_STORAGE_T *store) {
-  const size_t A = stack[stack_curr - 2].length;
-  const size_t B = stack[stack_curr - 1].length;
-  const size_t curr = stack[stack_curr - 2].start;
-  SORT_TYPE *storage;
-  size_t i, j, k;
-  TIM_SORT_RESIZE(store, MIN(A, B));
-  storage = store->storage;
-
-  /* left merge */
-  if (A < B) {
-    SORT_TYPE_CPY(storage, &dst[curr], A);
-    i = 0;
-    j = curr + A;
-
-    for (k = curr; k < curr + A + B; k++) {
-      if ((i < A) && (j < curr + A + B)) {
-        if (SORT_CMP(storage[i], dst[j]) <= 0) {
-          dst[k] = storage[i++];
-        } else {
-          dst[k] = dst[j++];
-        }
-      } else if (i < A) {
-        dst[k] = storage[i++];
-      } else {
-        break;
-      }
-    }
-  } else {
-    /* right merge */
-    SORT_TYPE_CPY(storage, &dst[curr + A], B);
-    i = B;
-    j = curr + A;
-    k = curr + A + B;
-
-    while (k-- > curr) {
-      if ((i > 0) && (j > curr)) {
-        if (SORT_CMP(dst[j - 1], storage[i - 1]) > 0) {
-          dst[k] = dst[--j];
-        } else {
-          dst[k] = storage[--i];
-        }
-      } else if (i > 0) {
-        dst[k] = storage[--i];
-      } else {
-        break;
-      }
-    }
-  }
-}
-
-static int TIM_SORT_COLLAPSE(SORT_TYPE *dst, TIM_SORT_RUN_T *stack, int stack_curr,
-                             TEMP_STORAGE_T *store, const size_t size) {
-  while (1) {
-    size_t A, B, C, D;
-    int ABC, BCD, CD;
-
-    /* if the stack only has one thing on it, we are done with the collapse */
-    if (stack_curr <= 1) {
-      break;
-    }
-
-    /* if this is the last merge, just do it */
-    if ((stack_curr == 2) && (stack[0].length + stack[1].length == size)) {
-      TIM_SORT_MERGE(dst, stack, stack_curr, store);
-      stack[0].length += stack[1].length;
-      stack_curr--;
-      break;
-    }
-    /* check if the invariant is off for a stack of 2 elements */
-    else if ((stack_curr == 2) && (stack[0].length <= stack[1].length)) {
-      TIM_SORT_MERGE(dst, stack, stack_curr, store);
-      stack[0].length += stack[1].length;
-      stack_curr--;
-      break;
-    } else if (stack_curr == 2) {
-      break;
-    }
-
-    B = stack[stack_curr - 3].length;
-    C = stack[stack_curr - 2].length;
-    D = stack[stack_curr - 1].length;
-
-    if (stack_curr >= 4) {
-      A = stack[stack_curr - 4].length;
-      ABC = (A <= B + C);
-    } else {
-      ABC = 0;
-    }
-
-    BCD = (B <= C + D) || ABC;
-    CD = (C <= D);
-
-    /* Both invariants are good */
-    if (!BCD && !CD) {
-      break;
-    }
-
-    /* left merge */
-    if (BCD && !CD) {
-      TIM_SORT_MERGE(dst, stack, stack_curr - 1, store);
-      stack[stack_curr - 3].length += stack[stack_curr - 2].length;
-      stack[stack_curr - 2] = stack[stack_curr - 1];
-      stack_curr--;
-    } else {
-      /* right merge */
-      TIM_SORT_MERGE(dst, stack, stack_curr, store);
-      stack[stack_curr - 2].length += stack[stack_curr - 1].length;
-      stack_curr--;
-    }
-  }
-
-  return stack_curr;
-}
-
-static __inline int PUSH_NEXT(SORT_TYPE *dst,
-                              const size_t size,
-                              TEMP_STORAGE_T *store,
-                              const size_t minrun,
-                              TIM_SORT_RUN_T *run_stack,
-                              size_t *stack_curr,
-                              size_t *curr) {
-  size_t len = COUNT_RUN(dst, *curr, size);
-  size_t run = minrun;
-
-  if (run > size - *curr) {
-    run = size - *curr;
-  }
-
-  if (run > len) {
-    BINARY_INSERTION_SORT_START(&dst[*curr], len, run);
-    len = run;
-  }
-
-  run_stack[*stack_curr].start = *curr;
-  run_stack[*stack_curr].length = len;
-  (*stack_curr)++;
-  *curr += len;
-
-  if (*curr == size) {
-    /* finish up */
-    while (*stack_curr > 1) {
-      TIM_SORT_MERGE(dst, run_stack, (int)*stack_curr, store);
-      run_stack[*stack_curr - 2].length += run_stack[*stack_curr - 1].length;
-      (*stack_curr)--;
-    }
-
-    if (store->storage != NULL) {
-      free(store->storage);
-      store->storage = NULL;
-    }
-
-    return 0;
-  }
-
-  return 1;
-}
-
-SORT_DEF void TIM_SORT(SORT_TYPE *dst, const size_t size) {
-  size_t minrun;
-  TEMP_STORAGE_T _store, *store;
-  TIM_SORT_RUN_T run_stack[TIM_SORT_STACK_SIZE];
-  size_t stack_curr = 0;
-  size_t curr = 0;
-
-  /* don't bother sorting an array of size 1 */
-  if (size <= 1) {
-    return;
-  }
-
-  if (size < 64) {
-    SMALL_STABLE_SORT(dst, size);
-    return;
-  }
-
-  /* compute the minimum run length */
-  minrun = compute_minrun(size);
-  /* temporary storage for merges */
-  store = &_store;
-  store->alloc = 0;
-  store->storage = NULL;
-
-  if (!PUSH_NEXT(dst, size, store, minrun, run_stack, &stack_curr, &curr)) {
-    return;
-  }
-
-  if (!PUSH_NEXT(dst, size, store, minrun, run_stack, &stack_curr, &curr)) {
-    return;
-  }
-
-  if (!PUSH_NEXT(dst, size, store, minrun, run_stack, &stack_curr, &curr)) {
-    return;
-  }
-
-  while (1) {
-    if (!CHECK_INVARIANT(run_stack, (int)stack_curr)) {
-      stack_curr = TIM_SORT_COLLAPSE(dst, run_stack, (int)stack_curr, store, size);
-      continue;
-    }
-
-    if (!PUSH_NEXT(dst, size, store, minrun, run_stack, &stack_curr, &curr)) {
-      return;
-    }
-  }
-}
-
 /* heap sort: based on wikipedia */
 
 static __inline void HEAP_SIFT_DOWN(SORT_TYPE *dst, const size_t start, const size_t end) {
@@ -1790,9 +1170,6 @@ SORT_DEF void HEAP_SORT(SORT_TYPE *dst, const size_t size) {
 #undef SORT_NAME
 #undef SORT_TYPE
 #undef SORT_CMP
-#undef TEMP_STORAGE_T
-#undef TIM_SORT_RUN_T
-#undef PUSH_NEXT
 #undef SORT_SWAP
 #undef SORT_MAKE_STR1
 #undef SORT_MAKE_STR
@@ -1800,19 +1177,8 @@ SORT_DEF void HEAP_SORT(SORT_TYPE *dst, const size_t size) {
 #undef BINARY_INSERTION_SORT_START
 #undef BINARY_INSERTION_SORT
 #undef REVERSE_ELEMENTS
-#undef COUNT_RUN
-#undef TIM_SORT
-#undef TIM_SORT_RESIZE
-#undef TIM_SORT_COLLAPSE
-#undef TIM_SORT_RUN_T
-#undef TEMP_STORAGE_T
 #undef MERGE_SORT
 #undef MERGE_SORT_RECURSIVE
-#undef MERGE_SORT_IN_PLACE
-#undef MERGE_SORT_IN_PLACE_RMERGE
-#undef MERGE_SORT_IN_PLACE_BACKMERGE
-#undef MERGE_SORT_IN_PLACE_FRONTMERGE
-#undef MERGE_SORT_IN_PLACE_ASWAP
 
 #ifdef SORT_GCC_PUSH
 #undef SORT_GCC_PUSH

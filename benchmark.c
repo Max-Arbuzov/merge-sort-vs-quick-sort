@@ -145,14 +145,9 @@ int main(void) {
   TEST_STDLIB(heapsort);
   TEST_STDLIB(mergesort);
 #endif
-  TEST_SORT_H(binary_insertion_sort);
-  TEST_SORT_H(bitonic_sort);
   TEST_SORT_H(quick_sort);
   TEST_SORT_H(merge_sort);
   TEST_SORT_H(heap_sort);
-  TEST_SORT_H(shell_sort);
-  TEST_SORT_H(tim_sort);
-  TEST_SORT_H(merge_sort_in_place);
 #ifdef SET_SORT_EXTRA
   TEST_SORT_H(grail_sort);
   TEST_SORT_H(sqrt_sort);
