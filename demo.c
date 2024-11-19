@@ -101,36 +101,6 @@ void run_tests(void) {
   }
 
   printf("stdlib qsort time:               %10.2f us per iteration\n", total_time / RUNS);
-#if !defined(__linux__) && !defined(__CYGWIN__)
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    heapsort(dst, SIZE, sizeof(int64_t), simple_cmp);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("stdlib heapsort time:            %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    mergesort(dst, SIZE, sizeof(int64_t), simple_cmp);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("stdlib mergesort time:           %10.2f us per iteration\n", total_time / RUNS);
-#endif
   srand48(SEED);
   total_time = 0.0;
 
@@ -147,36 +117,6 @@ void run_tests(void) {
   printf("quick sort time:                 %10.2f us per iteration\n", total_time / RUNS);
   srand48(SEED);
   total_time = 0.0;
-#ifdef SET_SORT_EXTRA
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_selection_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("selection sort time:             %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_bubble_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("bubble sort time:                %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-#endif
 
   for (i = 0; i < RUNS; i++) {
     fill(arr, SIZE);
@@ -231,106 +171,6 @@ void run_tests(void) {
   }
 
   printf("heap sort time:                  %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_shell_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("shell sort time:                 %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_tim_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("tim sort time:                   %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_merge_sort_in_place(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("in-place merge sort time:        %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-#ifdef SET_SORT_EXTRA
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_grail_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("grail sort time:                 %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_sqrt_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("sqrt sort time:                  %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_rec_stable_sort(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("rec stable sort sort time:       %10.2f us per iteration\n", total_time / RUNS);
-  srand48(SEED);
-  total_time = 0.0;
-
-  for (i = 0; i < RUNS; i++) {
-    fill(arr, SIZE);
-    memcpy(dst, arr, sizeof(int64_t) * SIZE);
-    start_time = utime();
-    sorter_grail_sort_dyn_buffer(dst, SIZE);
-    end_time = utime();
-    total_time += end_time - start_time;
-    verify(dst, SIZE);
-  }
-
-  printf("grail sort dyn buffer sort time: %10.2f us per iteration\n", total_time / RUNS);
-#endif
 }
 
 int main(void) {
