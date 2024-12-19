@@ -141,7 +141,7 @@ int main(void) {
 
   TEST_SORT_H(quick_sort);
   TEST_SORT_H(merge_sort);
-  TEST_SORT_H(heap_sort);
+  TEST_SORT_H(merge_sort_std);
 
   return 0;
 }

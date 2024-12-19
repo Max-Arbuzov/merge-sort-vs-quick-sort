@@ -122,7 +122,6 @@ static int clzll(uint64_t x) {
 #endif
 #ifndef SMALL_SORT
 #define SMALL_SORT BITONIC_SORT
-/*#define SMALL_SORT BINARY_INSERTION_SORT*/
 #endif
 #ifndef SMALL_STABLE_SORT
 #define SMALL_STABLE_SORT BINARY_INSERTION_SORT
@@ -908,7 +907,6 @@ SORT_DEF void MERGE_SORT(SORT_TYPE *dst, const size_t size) {
   SORT_DELETE_BUFFER(newdst);
 }
 
-
 static __inline size_t QUICK_SORT_PARTITION(SORT_TYPE *dst, const size_t left,
     const size_t right, const size_t pivot) {
   SORT_TYPE value = dst[pivot];
@@ -938,38 +936,6 @@ static __inline size_t QUICK_SORT_PARTITION(SORT_TYPE *dst, const size_t left,
 
   return index;
 }
-
-/* Based on Knuth vol. 3
-static __inline size_t QUICK_SORT_HOARE_PARTITION(SORT_TYPE *dst, const size_t l,
-    const size_t r, const size_t pivot) {
-  SORT_TYPE value;
-  size_t i = l + 1;
-  size_t j = r;
-
-  if (pivot != l) {
-    SORT_SWAP(dst[pivot], dst[l]);
-  }
-  value = dst[l];
-
-  while (1) {
-    while (SORT_CMP(dst[i], value) < 0) {
-      i++;
-    }
-    while (SORT_CMP(value, dst[j]) < 0) {
-      j--;
-    }
-    if (j <= i) {
-      SORT_SWAP(dst[l], dst[j]);
-      return j;
-    }
-    SORT_SWAP(dst[i], dst[j]);
-    i++;
-    j--;
-  }
-  return 0;
-}
-*/
-
 
 /* Return the median index of the objects at the three indices. */
 static __inline size_t MEDIAN(const SORT_TYPE *dst, const size_t a, const size_t b,
@@ -1148,6 +1114,8 @@ SORT_DEF void HEAP_SORT(SORT_TYPE *dst, const size_t size) {
     end--;
   }
 }
+
+#include "merge_sorts.h"
 
 #undef SORT_SAFE_CPY
 #undef SORT_TYPE_CPY
