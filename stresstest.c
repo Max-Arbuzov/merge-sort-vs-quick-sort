@@ -265,6 +265,7 @@ int run_tests(int64_t *sizes, int sizes_cnt, int type) {
   TEST_SORT_H(heap_sort);
 
   TEST_SORT_H(merge_sort_std);
+  TEST_SORT_H(merge_sort_halved);
   free(dst);
   return 0;
 }
@@ -363,7 +364,8 @@ void stable_tests(void) {
   check_stable("merge sort", stable_merge_sort, size, num_values);
   check_stable("heap sort", stable_heap_sort, size, num_values);
 
-  check_stable("MERGE_SORT_STD", stable_merge_sort_std, size, num_values);
+  check_stable("merge sort std", stable_merge_sort_std, size, num_values);
+  check_stable("merge sort halved", stable_merge_sort_halved, size, num_values);
 }
 
 int main(void) {
