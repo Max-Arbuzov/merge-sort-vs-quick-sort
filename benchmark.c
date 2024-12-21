@@ -143,6 +143,7 @@ int main(void) {
   TEST_SORT_H(merge_sort);
   TEST_SORT_H(merge_sort_std);
   TEST_SORT_H(merge_sort_halved);
+  TEST_SORT_H(merge_sort_nocopy);
 
   return 0;
 }
