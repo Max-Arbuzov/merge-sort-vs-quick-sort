@@ -146,5 +146,7 @@ int main(void) {
   TEST_SORT_H(merge_sort_nocopy);
   TEST_SORT_H(merge_sort_halved_nocopy);
   TEST_SORT_H(merge_sort_uniformbuffer);
+  TEST_SORT_H(merge_sort_norecursion);
+
   return 0;
 }

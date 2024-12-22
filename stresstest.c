@@ -269,6 +269,7 @@ int run_tests(int64_t *sizes, int sizes_cnt, int type) {
   TEST_SORT_H(merge_sort_nocopy);
   TEST_SORT_H(merge_sort_halved_nocopy);
   TEST_SORT_H(merge_sort_uniformbuffer);
+  TEST_SORT_H(merge_sort_norecursion);
   free(dst);
   return 0;
 }
@@ -372,6 +373,7 @@ void stable_tests(void) {
   check_stable("merge sort no copy", stable_merge_sort_nocopy, size, num_values);
   check_stable("merge sort halved no copy", stable_merge_sort_halved_nocopy, size, num_values);
   check_stable("merge sort uniform buffer", stable_merge_sort_uniformbuffer, size, num_values);
+  check_stable("merge sort no recursion", stable_merge_sort_norecursion, size, num_values);
 }
 
 int main(void) {

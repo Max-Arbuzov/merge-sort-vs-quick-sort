@@ -4,7 +4,7 @@
 
 #define MERGE_SORT_STD            SORT_MAKE_STR(merge_sort_std)
 #define MERGE_SORT_STD_RECURSIVE  SORT_MAKE_STR(merge_sort_std_recursive)
-
+// studying ways to work with temp buffer
 #define MERGE_SORT_HALVED                   SORT_MAKE_STR(merge_sort_halved)
 #define MERGE_SORT_HALVED_RECURSIVE         SORT_MAKE_STR(merge_sort_halved_recursive)
 #define MERGE_SORT_NOCOPY                   SORT_MAKE_STR(merge_sort_nocopy)
@@ -13,12 +13,17 @@
 #define MERGE_SORT_HALVED_NOCOPY_RECURSIVE  SORT_MAKE_STR(merge_sort_halved_nocopy_recursive)
 #define MERGE_SORT_UNIFORMBUFFER            SORT_MAKE_STR(merge_sort_uniformbuffer)
 #define MERGE_SORT_UNIFORMBUFFER_RECURSIVE  SORT_MAKE_STR(merge_sort_uniformbuffer_recursive)
+// studying ways to handle small sub-arrays
+#define MERGE_SORT_NORECURSION                 SORT_MAKE_STR(merge_sort_norecursion)
+#define MERGE_SORT_NORECURSION_INNER           SORT_MAKE_STR(merge_sort_norecursion_inner)
+#define MERGE_SORT_NORECURSION_MERGECHUNKS     SORT_MAKE_STR(merge_sort_norecursion_mergechunks)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NOCOPY(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED_NOCOPY(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size);
 
 /***********************\
  * Standard merge sort *
@@ -314,6 +319,71 @@ SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size) {
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/********************************************\
+ * Merge sort without recursion (bottom-up) *
+\********************************************/
+
+//merges two adjacent chunks into one for all chunks in the array
+static __inline void MERGE_SORT_NORECURSION_MERGECHUNKS(SORT_TYPE *dest, SORT_TYPE *source, const size_t size, const size_t chunkSize) {
+  size_t out = 0;
+  while (out < size) {
+    size_t i = out;
+    size_t iEnd = out + chunkSize;
+    size_t j = iEnd;
+    size_t jEnd = iEnd + chunkSize;
+    if (iEnd > size)
+      iEnd = size;
+    if (jEnd > size)
+      jEnd = size;
+
+    while ((i < iEnd) && (j < jEnd)) {
+      if (SORT_CMP(source[i], source[j]) <= 0) {
+        dest[out] = source[i++];
+      } else {
+        dest[out] = source[j++];
+      }
+      ++out;
+    }
+    while (i < iEnd) {
+      dest[out++] = source[i++];
+    }
+    while (j < jEnd) {
+      dest[out++] = source[j++];
+    }
+  }
+}
+
+//takes values from data or temp according to sourceIndex, sort values and put sorted values into data
+//if sourceIndex == 0 then takes from data
+//if sourceIndex == 1 then takes from temp
+SORT_DEF void MERGE_SORT_NORECURSION_INNER(SORT_TYPE *data, SORT_TYPE *temp, const size_t size, int sourceIndex) {
+  size_t chunkSize = 1;
+  while (chunkSize < size) {
+    if (sourceIndex <= 0) {
+      MERGE_SORT_NORECURSION_MERGECHUNKS(temp, data, size, chunkSize);
+    } else {
+      MERGE_SORT_NORECURSION_MERGECHUNKS(data, temp, size, chunkSize);
+    }
+    sourceIndex = 1 - sourceIndex;
+    chunkSize *= 2;
+  }
+
+  if (sourceIndex > 0)
+    SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  MERGE_SORT_NORECURSION_INNER(dst, tempBuf, size, 0);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 #undef MERGE_SORT_STD
 #undef MERGE_SORT_STD_RECURSIVE
 
@@ -325,3 +395,6 @@ SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size) {
 #undef MERGE_SORT_HALVED_NOCOPY_RECURSIVE
 #undef MERGE_SORT_UNIFORMBUFFER
 #undef MERGE_SORT_UNIFORMBUFFER_RECURSIVE
+#undef MERGE_SORT_NORECURSION
+#undef MERGE_SORT_NORECURSION_INNER
+#undef MERGE_SORT_NORECURSION_MERGECHUNKS
