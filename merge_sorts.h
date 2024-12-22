@@ -11,11 +11,14 @@
 #define MERGE_SORT_NOCOPY_RECURSIVE         SORT_MAKE_STR(merge_sort_nocopy_recursive)
 #define MERGE_SORT_HALVED_NOCOPY            SORT_MAKE_STR(merge_sort_halved_nocopy)
 #define MERGE_SORT_HALVED_NOCOPY_RECURSIVE  SORT_MAKE_STR(merge_sort_halved_nocopy_recursive)
+#define MERGE_SORT_UNIFORMBUFFER            SORT_MAKE_STR(merge_sort_uniformbuffer)
+#define MERGE_SORT_UNIFORMBUFFER_RECURSIVE  SORT_MAKE_STR(merge_sort_uniformbuffer_recursive)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NOCOPY(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED_NOCOPY(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size);
 
 /***********************\
  * Standard merge sort *
@@ -255,6 +258,62 @@ SORT_DEF void MERGE_SORT_HALVED_NOCOPY(SORT_TYPE *dst, const size_t size) {
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/*******************************************************\
+ * Standard merge sort that uses temp buffer uniformly *
+\*******************************************************/
+
+SORT_DEF void MERGE_SORT_UNIFORMBUFFER_RECURSIVE(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    SMALL_STABLE_SORT(data, size);
+    return;
+  }
+
+  const size_t middle = size >> 1;
+  MERGE_SORT_UNIFORMBUFFER_RECURSIVE(data, temp, middle);
+  MERGE_SORT_UNIFORMBUFFER_RECURSIVE(&data[middle], &temp[middle], size - middle);
+
+  size_t out = 0;
+  size_t i = 0;
+  size_t j = middle;
+  while ((i < middle) && (j < size)) {
+    if (SORT_CMP(data[i], data[j]) <= 0) {
+      temp[out] = data[i++];
+    } else {
+      temp[out] = data[j++];
+    }
+    ++out;
+  }
+  while (i < middle) {
+    temp[out++] = data[i++];
+  }
+  while (j < size) {
+    temp[out++] = data[j++];
+  }
+
+  SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    SMALL_STABLE_SORT(dst, size);
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  MERGE_SORT_UNIFORMBUFFER_RECURSIVE(dst, tempBuf, size);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 #undef MERGE_SORT_STD
 #undef MERGE_SORT_STD_RECURSIVE
 
@@ -264,3 +323,5 @@ SORT_DEF void MERGE_SORT_HALVED_NOCOPY(SORT_TYPE *dst, const size_t size) {
 #undef MERGE_SORT_NOCOPY_RECURSIVE
 #undef MERGE_SORT_HALVED_NOCOPY
 #undef MERGE_SORT_HALVED_NOCOPY_RECURSIVE
+#undef MERGE_SORT_UNIFORMBUFFER
+#undef MERGE_SORT_UNIFORMBUFFER_RECURSIVE
