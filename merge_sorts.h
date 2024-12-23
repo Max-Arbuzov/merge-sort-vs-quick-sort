@@ -19,6 +19,8 @@
 #define MERGE_SORT_NORECURSION_MERGECHUNKS     SORT_MAKE_STR(merge_sort_norecursion_mergechunks)
 #define MERGE_SORT_NORECURSION_PRESORT2        SORT_MAKE_STR(merge_sort_norecursion_presort2)
 #define MERGE_SORT_NORECURSION_PRESORT2_INNER  SORT_MAKE_STR(merge_sort_norecursion_presort2_inner)
+#define MERGE_SORT_NORECURSION_PRESORT3        SORT_MAKE_STR(merge_sort_norecursion_presort3)
+#define MERGE_SORT_NORECURSION_PRESORT3_INNER  SORT_MAKE_STR(merge_sort_norecursion_presort3_inner)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
@@ -27,6 +29,7 @@ SORT_DEF void MERGE_SORT_HALVED_NOCOPY(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_NORECURSION_PRESORT3(SORT_TYPE *dst, const size_t size);
 
 #define STABLE_SORT_2  SORT_MAKE_STR(stable_sort_2)
 static __inline void STABLE_SORT_2(SORT_TYPE *data) {
@@ -35,6 +38,25 @@ static __inline void STABLE_SORT_2(SORT_TYPE *data) {
   if (SORT_CMP(item_0, item_1) > 0) {
     data[0] = item_1;
     data[1] = item_0;
+  }
+}
+
+#define STABLE_SORT_3  SORT_MAKE_STR(stable_sort_3)
+static __inline void STABLE_SORT_3(SORT_TYPE *data) {
+  STABLE_SORT_2(data);
+  SORT_TYPE item_0 = data[0];
+  SORT_TYPE item_1 = data[1];
+  SORT_TYPE item_2 = data[2];
+  if (SORT_CMP(item_1, item_2) > 0) {
+    if (SORT_CMP(item_0, item_2) > 0) {
+      data[0] = item_2;
+      data[1] = item_0;
+      data[2] = item_1;
+    } else {
+    //data[0] = item_0;
+    data[1] = item_2;
+    data[2] = item_1;
+    }
   }
 }
 
@@ -437,7 +459,52 @@ SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2(SORT_TYPE *dst, const size_t size)
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/*********************************************************************\
+ * Merge sort without recursion (bottom-up) with presorting of trios *
+\*********************************************************************/
+
+//takes values from data or temp according to sourceIndex, sort values and put sorted values into data
+//if sourceIndex == 0 then takes from data
+//if sourceIndex == 1 then takes from temp
+SORT_DEF void MERGE_SORT_NORECURSION_PRESORT3_INNER(SORT_TYPE *data, SORT_TYPE *temp, const size_t size, int sourceIndex) {
+  size_t i;
+  for (i = 3; i <= size; i += 3) {
+    STABLE_SORT_3(&data[i - 3U]);
+  }
+  i -= 3;
+  size_t remain = size - i;
+  if (remain == 2)
+    STABLE_SORT_2(&data[i]);
+  size_t chunkSize = 3;
+
+  while (chunkSize < size) {
+    if (sourceIndex <= 0) {
+      MERGE_SORT_NORECURSION_MERGECHUNKS(temp, data, size, chunkSize);
+    } else {
+      MERGE_SORT_NORECURSION_MERGECHUNKS(data, temp, size, chunkSize);
+    }
+    sourceIndex = 1 - sourceIndex;
+    chunkSize *= 2;
+  }
+
+  if (sourceIndex > 0)
+    SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_NORECURSION_PRESORT3(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  MERGE_SORT_NORECURSION_PRESORT3_INNER(dst, tempBuf, size, 0);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 #undef STABLE_SORT_2
+#undef STABLE_SORT_3
 
 #undef MERGE_SORT_STD
 #undef MERGE_SORT_STD_RECURSIVE
@@ -456,3 +523,5 @@ SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2(SORT_TYPE *dst, const size_t size)
 #undef MERGE_SORT_NORECURSION_MERGECHUNKS
 #undef MERGE_SORT_NORECURSION_PRESORT2
 #undef MERGE_SORT_NORECURSION_PRESORT2_INNER
+#undef MERGE_SORT_NORECURSION_PRESORT3
+#undef MERGE_SORT_NORECURSION_PRESORT3_INNER
