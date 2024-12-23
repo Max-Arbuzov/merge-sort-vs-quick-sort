@@ -17,6 +17,8 @@
 #define MERGE_SORT_NORECURSION                 SORT_MAKE_STR(merge_sort_norecursion)
 #define MERGE_SORT_NORECURSION_INNER           SORT_MAKE_STR(merge_sort_norecursion_inner)
 #define MERGE_SORT_NORECURSION_MERGECHUNKS     SORT_MAKE_STR(merge_sort_norecursion_mergechunks)
+#define MERGE_SORT_NORECURSION_PRESORT2        SORT_MAKE_STR(merge_sort_norecursion_presort2)
+#define MERGE_SORT_NORECURSION_PRESORT2_INNER  SORT_MAKE_STR(merge_sort_norecursion_presort2_inner)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
@@ -24,6 +26,17 @@ SORT_DEF void MERGE_SORT_NOCOPY(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED_NOCOPY(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_UNIFORMBUFFER(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2(SORT_TYPE *dst, const size_t size);
+
+#define STABLE_SORT_2  SORT_MAKE_STR(stable_sort_2)
+static __inline void STABLE_SORT_2(SORT_TYPE *data) {
+  SORT_TYPE item_0 = data[0];
+  SORT_TYPE item_1 = data[1];
+  if (SORT_CMP(item_0, item_1) > 0) {
+    data[0] = item_1;
+    data[1] = item_0;
+  }
+}
 
 /***********************\
  * Standard merge sort *
@@ -384,6 +397,48 @@ SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size) {
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/*********************************************************************\
+ * Merge sort without recursion (bottom-up) with presorting of pairs *
+\*********************************************************************/
+
+//takes values from data or temp according to sourceIndex, sort values and put sorted values into data
+//if sourceIndex == 0 then takes from data
+//if sourceIndex == 1 then takes from temp
+SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2_INNER(SORT_TYPE *data, SORT_TYPE *temp, const size_t size, int sourceIndex) {
+  size_t i;
+  for (i = 2; i <= size; i += 2) {
+    STABLE_SORT_2(&data[i - 2U]);
+  }
+  size_t chunkSize = 2;
+
+  while (chunkSize < size) {
+    if (sourceIndex <= 0) {
+      MERGE_SORT_NORECURSION_MERGECHUNKS(temp, data, size, chunkSize);
+    } else {
+      MERGE_SORT_NORECURSION_MERGECHUNKS(data, temp, size, chunkSize);
+    }
+    sourceIndex = 1 - sourceIndex;
+    chunkSize *= 2;
+  }
+
+  if (sourceIndex > 0)
+    SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  MERGE_SORT_NORECURSION_PRESORT2_INNER(dst, tempBuf, size, 0);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
+#undef STABLE_SORT_2
+
 #undef MERGE_SORT_STD
 #undef MERGE_SORT_STD_RECURSIVE
 
@@ -395,6 +450,9 @@ SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size) {
 #undef MERGE_SORT_HALVED_NOCOPY_RECURSIVE
 #undef MERGE_SORT_UNIFORMBUFFER
 #undef MERGE_SORT_UNIFORMBUFFER_RECURSIVE
+
 #undef MERGE_SORT_NORECURSION
 #undef MERGE_SORT_NORECURSION_INNER
 #undef MERGE_SORT_NORECURSION_MERGECHUNKS
+#undef MERGE_SORT_NORECURSION_PRESORT2
+#undef MERGE_SORT_NORECURSION_PRESORT2_INNER
