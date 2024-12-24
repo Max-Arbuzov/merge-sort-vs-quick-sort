@@ -151,6 +151,7 @@ int main(void) {
   TEST_SORT_H(merge_sort_norecursion_presort3);
   TEST_SORT_H(merge_sort_norecursion_presort4);
   TEST_SORT_H(merge_sort_smallmerge1);
+  TEST_SORT_H(merge_sort_smallmerge2);
 
   return 0;
 }

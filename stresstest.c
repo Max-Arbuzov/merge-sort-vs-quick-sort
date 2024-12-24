@@ -258,6 +258,7 @@ int run_tests(int64_t *sizes, int sizes_cnt, int type) {
   if (MAXSIZE < 10000) {
     TEST_SORT_H(binary_insertion_sort);
     TEST_SORT_H(bitonic_sort);
+    TEST_SORT_H(merge_sort_small);
   }
 
   TEST_SORT_H(quick_sort);
@@ -274,6 +275,7 @@ int run_tests(int64_t *sizes, int sizes_cnt, int type) {
   TEST_SORT_H(merge_sort_norecursion_presort3);
   TEST_SORT_H(merge_sort_norecursion_presort4);
   TEST_SORT_H(merge_sort_smallmerge1);
+  TEST_SORT_H(merge_sort_smallmerge2);
   free(dst);
   return 0;
 }
@@ -382,6 +384,7 @@ void stable_tests(void) {
   check_stable("merge sort no recursion presort 3", stable_merge_sort_norecursion_presort3, size, num_values);
   check_stable("merge sort no recursion presort 4", stable_merge_sort_norecursion_presort4, size, num_values);
   check_stable("merge sort small merge 1", stable_merge_sort_smallmerge1, size, num_values);
+  check_stable("merge sort small merge 2", stable_merge_sort_smallmerge2, size, num_values);
 }
 
 int main(void) {
