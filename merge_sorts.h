@@ -23,6 +23,8 @@
 #define MERGE_SORT_NORECURSION_PRESORT3_INNER  SORT_MAKE_STR(merge_sort_norecursion_presort3_inner)
 #define MERGE_SORT_NORECURSION_PRESORT4        SORT_MAKE_STR(merge_sort_norecursion_presort4)
 #define MERGE_SORT_NORECURSION_PRESORT4_INNER  SORT_MAKE_STR(merge_sort_norecursion_presort4_inner)
+#define MERGE_SORT_SMALLMERGE1                 SORT_MAKE_STR(merge_sort_smallmerge1)
+#define MERGE_SORT_SMALLMERGE1_RECURSIVE       SORT_MAKE_STR(merge_sort_smallmerge1_recursive)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
@@ -33,6 +35,7 @@ SORT_DEF void MERGE_SORT_NORECURSION(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NORECURSION_PRESORT2(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NORECURSION_PRESORT3(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_NORECURSION_PRESORT4(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_SMALLMERGE1(SORT_TYPE *dst, const size_t size);
 
 #define STABLE_SORT_2  SORT_MAKE_STR(stable_sort_2)
 static __inline void STABLE_SORT_2(SORT_TYPE *data) {
@@ -599,6 +602,62 @@ SORT_DEF void MERGE_SORT_NORECURSION_PRESORT4(SORT_TYPE *dst, const size_t size)
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/**********************************************************************\
+ * Standard merge sort that uses non-recursive merge sort with buffer *
+ * for small sub-arrays (instead of insertion sort)                   *
+\**********************************************************************/
+
+SORT_DEF void MERGE_SORT_SMALLMERGE1_RECURSIVE(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    MERGE_SORT_NORECURSION_INNER(data, temp, size, 0);
+    return;
+  }
+
+  const size_t middle = size >> 1;
+  MERGE_SORT_SMALLMERGE1_RECURSIVE(data, temp, middle);
+  MERGE_SORT_SMALLMERGE1_RECURSIVE(&data[middle], temp, size - middle);
+
+  size_t out = 0;
+  size_t i = 0;
+  size_t j = middle;
+  while ((i < middle) && (j < size)) {
+    if (SORT_CMP(data[i], data[j]) <= 0) {
+      temp[out] = data[i++];
+    } else {
+      temp[out] = data[j++];
+    }
+    ++out;
+  }
+  while (i < middle) {
+    temp[out++] = data[i++];
+  }
+  while (j < size) {
+    temp[out++] = data[j++];
+  }
+
+  SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_SMALLMERGE1(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  if (size <= SMALL_SORT_BND) {
+    MERGE_SORT_NORECURSION_INNER(dst, tempBuf, size, 0);
+  } else {
+    MERGE_SORT_SMALLMERGE1_RECURSIVE(dst, tempBuf, size);
+  }
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 #undef STABLE_SORT_2
 #undef STABLE_SORT_3
 #undef STABLE_SORT_4
@@ -625,3 +684,5 @@ SORT_DEF void MERGE_SORT_NORECURSION_PRESORT4(SORT_TYPE *dst, const size_t size)
 #undef MERGE_SORT_NORECURSION_PRESORT3_INNER
 #undef MERGE_SORT_NORECURSION_PRESORT4
 #undef MERGE_SORT_NORECURSION_PRESORT4_INNER
+#undef MERGE_SORT_SMALLMERGE1
+#undef MERGE_SORT_SMALLMERGE1_RECURSIVE
