@@ -27,6 +27,8 @@
 #define MERGE_SORT_SMALLMERGE1_RECURSIVE       SORT_MAKE_STR(merge_sort_smallmerge1_recursive)
 #define MERGE_SORT_SMALLMERGE2                 SORT_MAKE_STR(merge_sort_smallmerge2)
 #define MERGE_SORT_SMALLMERGE2_RECURSIVE       SORT_MAKE_STR(merge_sort_smallmerge2_recursive)
+#define MERGE_SORT_SMALLMERGE3                 SORT_MAKE_STR(merge_sort_smallmerge3)
+#define MERGE_SORT_SMALLMERGE3_RECURSIVE       SORT_MAKE_STR(merge_sort_smallmerge3_recursive)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
@@ -39,6 +41,7 @@ SORT_DEF void MERGE_SORT_NORECURSION_PRESORT3(SORT_TYPE *dst, const size_t size)
 SORT_DEF void MERGE_SORT_NORECURSION_PRESORT4(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_SMALLMERGE1(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_SMALLMERGE2(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_SMALLMERGE3(SORT_TYPE *dst, const size_t size);
 
 #define STABLE_SORT_2  SORT_MAKE_STR(stable_sort_2)
 static __inline void STABLE_SORT_2(SORT_TYPE *data) {
@@ -182,6 +185,19 @@ static __inline void MERGE_SORT_SMALL_MERGECHUNKS(SORT_TYPE *data, const size_t 
 #define MERGE_SORT_SMALL  SORT_MAKE_STR(merge_sort_small)
 SORT_DEF void MERGE_SORT_SMALL(SORT_TYPE *data, const size_t size) {
   size_t chunkSize = STABLE_PRESORT(data, size, 4);
+  while (chunkSize < size) {
+    MERGE_SORT_SMALL_MERGECHUNKS(data, size, chunkSize);
+    chunkSize *= 2;
+  }
+}
+
+//balanced version of MERGE_SORT_SMALL()
+#define MERGE_SORT_SMALL_BALANCED  SORT_MAKE_STR(merge_sort_small_balanced)
+SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
+  size_t chunkSize = 4;
+  if ((size > 8) && (size < 13))
+    chunkSize = 3;
+  chunkSize = STABLE_PRESORT(data, size, chunkSize);
   while (chunkSize < size) {
     MERGE_SORT_SMALL_MERGECHUNKS(data, size, chunkSize);
     chunkSize *= 2;
@@ -768,6 +784,63 @@ SORT_DEF void MERGE_SORT_SMALLMERGE2(SORT_TYPE *dst, const size_t size) {
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/****************************************************************************\
+ * Standard merge sort that uses in-place non-recursive balanced merge sort *
+ * for small sub-arrays (instead of insertion sort)                         *
+\****************************************************************************/
+
+SORT_DEF void MERGE_SORT_SMALLMERGE3_RECURSIVE(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    MERGE_SORT_SMALL_BALANCED(data, size);
+    return;
+  }
+
+  const size_t middle = size >> 1;
+  MERGE_SORT_SMALLMERGE3_RECURSIVE(data, temp, middle);
+  MERGE_SORT_SMALLMERGE3_RECURSIVE(&data[middle], temp, size - middle);
+
+  size_t out = 0;
+  size_t i = 0;
+  size_t j = middle;
+  while ((i < middle) && (j < size)) {
+    if (SORT_CMP(data[i], data[j]) <= 0) {
+      temp[out] = data[i++];
+    } else {
+      temp[out] = data[j++];
+    }
+    ++out;
+  }
+  while (i < middle) {
+    temp[out++] = data[i++];
+  }
+  while (j < size) {
+    temp[out++] = data[j++];
+  }
+
+  SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_SMALLMERGE3(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    MERGE_SORT_SMALL_BALANCED(dst, size);
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  MERGE_SORT_SMALLMERGE3_RECURSIVE(dst, tempBuf, size);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 #undef STABLE_SORT_2
 #undef STABLE_SORT_3
 #undef STABLE_SORT_4
@@ -775,6 +848,7 @@ SORT_DEF void MERGE_SORT_SMALLMERGE2(SORT_TYPE *dst, const size_t size) {
 #undef MERGE_SORT_SMALL_MERGECHUNK
 #undef MERGE_SORT_SMALL_MERGECHUNKS
 #undef MERGE_SORT_SMALL
+#undef MERGE_SORT_SMALL_BALANCED
 
 #undef MERGE_SORT_STD
 #undef MERGE_SORT_STD_RECURSIVE
@@ -801,3 +875,5 @@ SORT_DEF void MERGE_SORT_SMALLMERGE2(SORT_TYPE *dst, const size_t size) {
 #undef MERGE_SORT_SMALLMERGE1_RECURSIVE
 #undef MERGE_SORT_SMALLMERGE2
 #undef MERGE_SORT_SMALLMERGE2_RECURSIVE
+#undef MERGE_SORT_SMALLMERGE3
+#undef MERGE_SORT_SMALLMERGE3_RECURSIVE
