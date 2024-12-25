@@ -69,14 +69,14 @@ static __inline void INSERT_INTO_SORTED_4(SORT_TYPE *data, SORT_TYPE newItem) {
   }
 }
 
-#define STABLE_SORT_1  SORT_MAKE_STR(stable_sort_1)
-static __inline void STABLE_SORT_1(SORT_TYPE *data) {
+#define INSERT_SORT_1  SORT_MAKE_STR(insert_sort_1)
+static __inline void INSERT_SORT_1(SORT_TYPE *data) {
   return;
 }
 
-#define STABLE_SORT_2  SORT_MAKE_STR(stable_sort_2)
-static __inline void STABLE_SORT_2(SORT_TYPE *data) {
-  // STABLE_SORT_1(data);
+#define INSERT_SORT_2  SORT_MAKE_STR(insert_sort_2)
+static __inline void INSERT_SORT_2(SORT_TYPE *data) {
+  // INSERT_SORT_1(data);
   SORT_TYPE item_0 = data[0];
   SORT_TYPE item_1 = data[1];
   if (SORT_CMP(item_0, item_1) > 0) {
@@ -87,9 +87,9 @@ static __inline void STABLE_SORT_2(SORT_TYPE *data) {
   }
 }
 
-#define STABLE_SORT_3  SORT_MAKE_STR(stable_sort_3)
-static __inline void STABLE_SORT_3(SORT_TYPE *data) {
-  STABLE_SORT_2(data);
+#define INSERT_SORT_3  SORT_MAKE_STR(insert_sort_3)
+static __inline void INSERT_SORT_3(SORT_TYPE *data) {
+  INSERT_SORT_2(data);
   SORT_TYPE item_1 = data[1];
   SORT_TYPE item_2 = data[2];
   if (SORT_CMP(item_1, item_2) > 0) {
@@ -100,9 +100,9 @@ static __inline void STABLE_SORT_3(SORT_TYPE *data) {
   }
 }
 
-#define STABLE_SORT_4  SORT_MAKE_STR(stable_sort_4)
-static __inline void STABLE_SORT_4(SORT_TYPE *data) {
-  STABLE_SORT_3(data);
+#define INSERT_SORT_4  SORT_MAKE_STR(insert_sort_4)
+static __inline void INSERT_SORT_4(SORT_TYPE *data) {
+  INSERT_SORT_3(data);
   SORT_TYPE item_1 = data[1];
   SORT_TYPE item_3 = data[3];
   if (SORT_CMP(item_1, item_3) > 0) {
@@ -122,17 +122,17 @@ static __inline int STABLE_PRESORT(SORT_TYPE *data, const size_t size, size_t ch
 
   if (chunkSize == 2) {
     for (i = 2; i <= size; i += 2) {
-      STABLE_SORT_2(&data[i - 2U]);
+      INSERT_SORT_2(&data[i - 2U]);
     }
     i -= 2;
   } else if (chunkSize == 3) {
     for (i = 3; i <= size; i += 3) {
-      STABLE_SORT_3(&data[i - 3U]);
+      INSERT_SORT_3(&data[i - 3U]);
     }
     i -= 3;
   } else if (chunkSize == 4) {
     for (i = 4; i <= size; i += 4) {
-      STABLE_SORT_4(&data[i - 4U]);
+      INSERT_SORT_4(&data[i - 4U]);
     }
     i -= 4;
   } else {
@@ -141,9 +141,9 @@ static __inline int STABLE_PRESORT(SORT_TYPE *data, const size_t size, size_t ch
 
   size_t remain = size - i;
   if (remain == 2) {
-    STABLE_SORT_2(&data[i]);
+    INSERT_SORT_2(&data[i]);
   } else if (remain == 3) {
-    STABLE_SORT_3(&data[i]);
+    INSERT_SORT_3(&data[i]);
   }
   return chunkSize;
 }
@@ -196,10 +196,10 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef INSERT_INTO_SORTED_3
 #undef INSERT_INTO_SORTED_4
 
-#undef STABLE_SORT_1
-#undef STABLE_SORT_2
-#undef STABLE_SORT_3
-#undef STABLE_SORT_4
+#undef INSERT_SORT_1
+#undef INSERT_SORT_2
+#undef INSERT_SORT_3
+#undef INSERT_SORT_4
 #undef STABLE_PRESORT
 
 #undef MERGE_SORT_SMALL_MERGECHUNKS
