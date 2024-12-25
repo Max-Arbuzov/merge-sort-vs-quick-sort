@@ -114,6 +114,107 @@ static __inline void INSERT_SORT_4(SORT_TYPE *data) {
   }
 }
 
+#define INSERT_SORT_5  SORT_MAKE_STR(insert_sort_5)
+static __inline void INSERT_SORT_5(SORT_TYPE *data) {
+  INSERT_SORT_4(data);
+  SORT_TYPE item_2 = data[2];
+  SORT_TYPE item_4 = data[4];
+  if (SORT_CMP(item_2, item_4) > 0) {
+    data[4] = data[3];
+    data[3] = item_2;
+    INSERT_INTO_SORTED_3(data, item_4);
+  } else {
+    INSERT_INTO_SORTED_2(&data[3], item_4);
+  }
+}
+
+#define INSERT_SORT_6  SORT_MAKE_STR(insert_sort_6)
+static __inline void INSERT_SORT_6(SORT_TYPE *data) {
+  INSERT_SORT_5(data);
+  SORT_TYPE item_2 = data[2];
+  SORT_TYPE item_5 = data[5];
+  if (SORT_CMP(item_2, item_5) > 0) {
+    data[5] = data[4];
+    data[4] = data[3];
+    data[3] = item_2;
+    INSERT_INTO_SORTED_3(data, item_5);
+  } else {
+    INSERT_INTO_SORTED_3(&data[3], item_5);
+  }
+}
+
+#define INSERT_SORT_7  SORT_MAKE_STR(insert_sort_7)
+static __inline void INSERT_SORT_7(SORT_TYPE *data) {
+  INSERT_SORT_6(data);
+  SORT_TYPE item_3 = data[3];
+  SORT_TYPE item_6 = data[6];
+  if (SORT_CMP(item_3, item_6) > 0) {
+    data[6] = data[5];
+    data[5] = data[4];
+    data[4] = item_3;
+    INSERT_INTO_SORTED_4(data, item_6);
+  } else {
+    INSERT_INTO_SORTED_3(&data[4], item_6);
+  }
+}
+
+#define INSERT_SORT_8  SORT_MAKE_STR(insert_sort_8)
+static __inline void INSERT_SORT_8(SORT_TYPE *data) {
+  INSERT_SORT_7(data);
+  SORT_TYPE item_3 = data[3];
+  SORT_TYPE item_7 = data[7];
+  if ((SORT_CMP(item_3, item_7)) > 0) {
+    data[7] = data[6];
+    data[6] = data[5];
+    data[5] = data[4];
+    data[4] = item_3;
+    INSERT_INTO_SORTED_4(data, item_7);
+  } else {
+    INSERT_INTO_SORTED_4(&data[4], item_7);
+  }
+}
+
+#define INSERT_SORT  SORT_MAKE_STR(insert_sort)
+// it is if-else only (no loops) binary insertion sort for size <= 8
+SORT_DEF void INSERT_SORT(SORT_TYPE *data, const size_t size) {
+  switch (size) {
+  case 0:
+  case 1:
+    break;
+
+  case 2:
+    INSERT_SORT_2(data);
+    break;
+
+  case 3:
+    INSERT_SORT_3(data);
+    break;
+
+  case 4:
+    INSERT_SORT_4(data);
+    break;
+
+  case 5:
+    INSERT_SORT_5(data);
+    break;
+
+  case 6:
+    INSERT_SORT_6(data);
+    break;
+
+  case 7:
+    INSERT_SORT_7(data);
+    break;
+
+  case 8:
+    INSERT_SORT_8(data);
+    break;
+
+  default:
+    BINARY_INSERTION_SORT(data, size);
+  }
+}
+
 //sorts items in chunks of the array for subsequent bottom-up merging
 //chunkSize can be 2, 3 or 4
 //returns actual size of sorted chunks
@@ -191,6 +292,7 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 }
 
 #undef MERGE_CHUNK_INPLACE
+
 #undef INSERT_INTO_SORTED_1
 #undef INSERT_INTO_SORTED_2
 #undef INSERT_INTO_SORTED_3
@@ -200,6 +302,12 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef INSERT_SORT_2
 #undef INSERT_SORT_3
 #undef INSERT_SORT_4
+#undef INSERT_SORT_5
+#undef INSERT_SORT_6
+#undef INSERT_SORT_7
+#undef INSERT_SORT_8
+#undef INSERT_SORT
+
 #undef STABLE_PRESORT
 
 #undef MERGE_SORT_SMALL_MERGECHUNKS
