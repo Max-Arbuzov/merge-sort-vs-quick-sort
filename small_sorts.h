@@ -22,66 +22,95 @@ static __inline void MERGE_CHUNK_INPLACE(SORT_TYPE *data, size_t i, size_t j, si
   }
 }
 
+// sorted size is 0 before call and 1 after
+// data[0] has no data before call
+#define INSERT_INTO_SORTED_1  SORT_MAKE_STR(insert_into_sorted_1)
+static __inline void INSERT_INTO_SORTED_1(SORT_TYPE *data, SORT_TYPE newItem) {
+  data[0] = newItem;
+}
+
+// sorted size is 1 before call and 2 after
+// data[1] has no data before call
+#define INSERT_INTO_SORTED_2  SORT_MAKE_STR(insert_into_sorted_2)
+static __inline void INSERT_INTO_SORTED_2(SORT_TYPE *data, SORT_TYPE newItem) {
+  SORT_TYPE item_0 = data[0];
+  if (SORT_CMP(item_0, newItem) > 0) {
+    data[1] = item_0;
+    data[0] = newItem; // INSERT_INTO_SORTED_1(data, newItem);
+  } else {
+    data[1] = newItem; // INSERT_INTO_SORTED_1(&data[1], newItem);
+  }
+}
+
+// sorted size is 2 before call and 3 after
+// data[2] has no data before call
+#define INSERT_INTO_SORTED_3  SORT_MAKE_STR(insert_into_sorted_3)
+static __inline void INSERT_INTO_SORTED_3(SORT_TYPE *data, SORT_TYPE newItem) {
+  SORT_TYPE item_1 = data[1];
+  if (SORT_CMP(item_1, newItem) > 0) {
+    data[2] = item_1;
+    INSERT_INTO_SORTED_2(data, newItem);
+  } else {
+    data[2] = newItem; // INSERT_INTO_SORTED_1(&data[2], newItem);
+  }
+}
+
+// sorted size is 3 before call and 4 after
+// data[3] has no data before call
+#define INSERT_INTO_SORTED_4  SORT_MAKE_STR(insert_into_sorted_4)
+static __inline void INSERT_INTO_SORTED_4(SORT_TYPE *data, SORT_TYPE newItem) {
+  SORT_TYPE item_1 = data[1];
+  if (SORT_CMP(item_1, newItem) > 0) {
+    data[3] = data[2];
+    data[2] = item_1;
+    INSERT_INTO_SORTED_2(data, newItem);
+  } else {
+    INSERT_INTO_SORTED_2(&data[2], newItem);
+  }
+}
+
+#define STABLE_SORT_1  SORT_MAKE_STR(stable_sort_1)
+static __inline void STABLE_SORT_1(SORT_TYPE *data) {
+  return;
+}
+
 #define STABLE_SORT_2  SORT_MAKE_STR(stable_sort_2)
 static __inline void STABLE_SORT_2(SORT_TYPE *data) {
+  // STABLE_SORT_1(data);
   SORT_TYPE item_0 = data[0];
   SORT_TYPE item_1 = data[1];
   if (SORT_CMP(item_0, item_1) > 0) {
-    data[0] = item_1;
     data[1] = item_0;
+    data[0] = item_1; // INSERT_INTO_SORTED_1(data, item_1);
+  } else {
+    // INSERT_INTO_SORTED_1(&data[1], item_1);
   }
 }
 
 #define STABLE_SORT_3  SORT_MAKE_STR(stable_sort_3)
 static __inline void STABLE_SORT_3(SORT_TYPE *data) {
   STABLE_SORT_2(data);
-  SORT_TYPE item_0 = data[0];
   SORT_TYPE item_1 = data[1];
   SORT_TYPE item_2 = data[2];
   if (SORT_CMP(item_1, item_2) > 0) {
-    if (SORT_CMP(item_0, item_2) > 0) {
-      data[0] = item_2;
-      data[1] = item_0;
-      data[2] = item_1;
-    } else {
-    //data[0] = item_0;
-    data[1] = item_2;
     data[2] = item_1;
-    }
+    INSERT_INTO_SORTED_2(data, item_2);
+  } else {
+    //INSERT_INTO_SORTED_1(&data[2], item_2);
   }
 }
 
 #define STABLE_SORT_4  SORT_MAKE_STR(stable_sort_4)
 static __inline void STABLE_SORT_4(SORT_TYPE *data) {
   STABLE_SORT_3(data);
-  SORT_TYPE item_0 = data[0];
   SORT_TYPE item_1 = data[1];
-  SORT_TYPE item_2 = data[2];
   SORT_TYPE item_3 = data[3];
   if (SORT_CMP(item_1, item_3) > 0) {
-    if (SORT_CMP(item_0, item_3) > 0) {
-      data[0] = item_3;
-      data[1] = item_0;
-      data[2] = item_1;
-      data[3] = item_2;
-    } else {
-      //data[0] = item_0;
-      data[1] = item_3;
-      data[2] = item_1;
-      data[3] = item_2;
-    }
+    data[3] = data[2];
+    data[2] = item_1;
+    INSERT_INTO_SORTED_2(data, item_3);
   } else {
-    if (SORT_CMP(item_2, item_3) > 0) {
-      //data[0] = item_0;
-      //data[1] = item_1;
-      data[2] = item_3;
-      data[3] = item_2;
-    } else {
-      //data[0] = item_0;
-      //data[1] = item_1;
-      //data[2] = item_2;
-      //data[3] = item_3;
-    }
+    INSERT_INTO_SORTED_2(&data[2], item_3);
   }
 }
 
@@ -162,7 +191,12 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 }
 
 #undef MERGE_CHUNK_INPLACE
+#undef INSERT_INTO_SORTED_1
+#undef INSERT_INTO_SORTED_2
+#undef INSERT_INTO_SORTED_3
+#undef INSERT_INTO_SORTED_4
 
+#undef STABLE_SORT_1
 #undef STABLE_SORT_2
 #undef STABLE_SORT_3
 #undef STABLE_SORT_4
