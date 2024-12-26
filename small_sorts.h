@@ -1,3 +1,7 @@
+////delete after refactoring
+#define INSERT_SORT_6  SORT_MAKE_STR(insert_sort_6)
+static __inline void INSERT_SORT_6(SORT_TYPE *data);
+
 #define STABLE_PRESORT             SORT_MAKE_STR(stable_presort)
 #define MERGE_SORT_SMALL           SORT_MAKE_STR(merge_sort_small)
 #define MERGE_SORT_SMALL_BALANCED  SORT_MAKE_STR(merge_sort_small_balanced)
@@ -98,80 +102,6 @@ static __inline void INSERT_INTO_SORTED_6(SORT_TYPE *data, SORT_TYPE newItem) {
   }
 }
 
-#define INSERT_SORT_1  SORT_MAKE_STR(insert_sort_1)
-static __inline void INSERT_SORT_1(SORT_TYPE *data) {
-  return;
-}
-
-#define INSERT_SORT_2  SORT_MAKE_STR(insert_sort_2)
-static __inline void INSERT_SORT_2(SORT_TYPE *data) {
-  // INSERT_SORT_1(data);
-  SORT_TYPE item_0 = data[0];
-  SORT_TYPE item_1 = data[1];
-  if (SORT_CMP(item_0, item_1) > 0) {
-    data[1] = item_0;
-    data[0] = item_1; // INSERT_INTO_SORTED_1(data, item_1);
-  } else {
-    // INSERT_INTO_SORTED_1(&data[1], item_1);
-  }
-}
-
-#define INSERT_SORT_3  SORT_MAKE_STR(insert_sort_3)
-static __inline void INSERT_SORT_3(SORT_TYPE *data) {
-  INSERT_SORT_2(data);
-  SORT_TYPE item_1 = data[1];
-  SORT_TYPE item_2 = data[2];
-  if (SORT_CMP(item_1, item_2) > 0) {
-    data[2] = item_1;
-    INSERT_INTO_SORTED_2(data, item_2);
-  } else {
-    //INSERT_INTO_SORTED_1(&data[2], item_2);
-  }
-}
-
-#define INSERT_SORT_4  SORT_MAKE_STR(insert_sort_4)
-static __inline void INSERT_SORT_4(SORT_TYPE *data) {
-  INSERT_SORT_3(data);
-  SORT_TYPE item_1 = data[1];
-  SORT_TYPE item_3 = data[3];
-  if (SORT_CMP(item_1, item_3) > 0) {
-    data[3] = data[2];
-    data[2] = item_1;
-    INSERT_INTO_SORTED_2(data, item_3);
-  } else {
-    INSERT_INTO_SORTED_2(&data[2], item_3);
-  }
-}
-
-#define INSERT_SORT_5  SORT_MAKE_STR(insert_sort_5)
-static __inline void INSERT_SORT_5(SORT_TYPE *data) {
-  INSERT_SORT_4(data);
-  SORT_TYPE item_2 = data[2];
-  SORT_TYPE item_4 = data[4];
-  if (SORT_CMP(item_2, item_4) > 0) {
-    data[4] = data[3];
-    data[3] = item_2;
-    INSERT_INTO_SORTED_3(data, item_4);
-  } else {
-    INSERT_INTO_SORTED_2(&data[3], item_4);
-  }
-}
-
-#define INSERT_SORT_6  SORT_MAKE_STR(insert_sort_6)
-static __inline void INSERT_SORT_6(SORT_TYPE *data) {
-  INSERT_SORT_5(data);
-  SORT_TYPE item_2 = data[2];
-  SORT_TYPE item_5 = data[5];
-  if (SORT_CMP(item_2, item_5) > 0) {
-    data[5] = data[4];
-    data[4] = data[3];
-    data[3] = item_2;
-    INSERT_INTO_SORTED_3(data, item_5);
-  } else {
-    INSERT_INTO_SORTED_3(&data[3], item_5);
-  }
-}
-
 #define INSERT_SORT_7  SORT_MAKE_STR(insert_sort_7)
 static __inline void INSERT_SORT_7(SORT_TYPE *data) {
   INSERT_SORT_6(data);
@@ -268,6 +198,80 @@ static __inline void INSERT_SORT_12(SORT_TYPE *data) {
     INSERT_INTO_SORTED_6(data, item_11);
   } else {
     INSERT_INTO_SORTED_6(&data[6], item_11);
+  }
+}
+
+#define INSERT_SORT_1  SORT_MAKE_STR(insert_sort_1)
+static __inline void INSERT_SORT_1(SORT_TYPE *data) {
+  return;
+}
+
+#define INSERT_SORT_2  SORT_MAKE_STR(insert_sort_2)
+static __inline void INSERT_SORT_2(SORT_TYPE *data) {
+  // INSERT_SORT_1(data);
+  SORT_TYPE item_0 = data[0];
+  SORT_TYPE item_1 = data[1];
+  if (SORT_CMP(item_0, item_1) > 0) {
+    data[1] = item_0;
+    data[0] = item_1; // INSERT_INTO_SORTED_1(data, item_1);
+  } else {
+    // INSERT_INTO_SORTED_1(&data[1], item_1);
+  }
+}
+
+#define INSERT_SORT_3  SORT_MAKE_STR(insert_sort_3)
+static __inline void INSERT_SORT_3(SORT_TYPE *data) {
+  INSERT_SORT_2(data);
+  SORT_TYPE item_1 = data[1];
+  SORT_TYPE item_2 = data[2];
+  if (SORT_CMP(item_1, item_2) > 0) {
+    data[2] = item_1;
+    INSERT_INTO_SORTED_2(data, item_2);
+  } else {
+    //INSERT_INTO_SORTED_1(&data[2], item_2);
+  }
+}
+
+#define INSERT_SORT_4  SORT_MAKE_STR(insert_sort_4)
+static __inline void INSERT_SORT_4(SORT_TYPE *data) {
+  INSERT_SORT_3(data);
+  SORT_TYPE item_1 = data[1];
+  SORT_TYPE item_3 = data[3];
+  if (SORT_CMP(item_1, item_3) > 0) {
+    data[3] = data[2];
+    data[2] = item_1;
+    INSERT_INTO_SORTED_2(data, item_3);
+  } else {
+    INSERT_INTO_SORTED_2(&data[2], item_3);
+  }
+}
+
+#define INSERT_SORT_5  SORT_MAKE_STR(insert_sort_5)
+static __inline void INSERT_SORT_5(SORT_TYPE *data) {
+  INSERT_SORT_4(data);
+  SORT_TYPE item_2 = data[2];
+  SORT_TYPE item_4 = data[4];
+  if (SORT_CMP(item_2, item_4) > 0) {
+    data[4] = data[3];
+    data[3] = item_2;
+    INSERT_INTO_SORTED_3(data, item_4);
+  } else {
+    INSERT_INTO_SORTED_2(&data[3], item_4);
+  }
+}
+
+#define INSERT_SORT_6  SORT_MAKE_STR(insert_sort_6)
+static __inline void INSERT_SORT_6(SORT_TYPE *data) {
+  INSERT_SORT_5(data);
+  SORT_TYPE item_2 = data[2];
+  SORT_TYPE item_5 = data[5];
+  if (SORT_CMP(item_2, item_5) > 0) {
+    data[5] = data[4];
+    data[4] = data[3];
+    data[3] = item_2;
+    INSERT_INTO_SORTED_3(data, item_5);
+  } else {
+    INSERT_INTO_SORTED_3(&data[3], item_5);
   }
 }
 
