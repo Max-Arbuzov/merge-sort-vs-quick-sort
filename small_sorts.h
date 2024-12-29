@@ -2,6 +2,10 @@
 #define MERGE_SORT_SMALL           SORT_MAKE_STR(merge_sort_small)
 #define MERGE_SORT_SMALL_BALANCED  SORT_MAKE_STR(merge_sort_small_balanced)
 
+/*********************\
+ * Merging functions *
+\*********************/
+
 #define MERGE_CHUNK_INPLACE  SORT_MAKE_STR(merge_chunk_inplace)
 // merges two adjacent chunks into one
 // i - left start
@@ -10,8 +14,8 @@
 // O(N*N) item moves
 static __inline void MERGE_CHUNK_INPLACE(SORT_TYPE *data, size_t i, size_t j, size_t end) {
   while ((i < j) && (j < end)) {
-    if (SORT_CMP(data[i], data[j]) > 0) {
-      SORT_TYPE item = data[j];
+    SORT_TYPE item = data[j];
+    if (SORT_CMP(data[i], item) > 0) {
       for (int k = j; k > i; k--) {
         data[k] = data[k - 1];
       }
@@ -443,6 +447,74 @@ SORT_DEF void INSERT_SORT(SORT_TYPE *data, const size_t size) {
   }
 }
 
+/**********************************************************************\
+ * Nano sorts                                                         *
+ * "Nano" means the functions do not access the array while sorting   *
+ * Do not contain loops                                               *
+ * e.g. NANO_SORT_4 makes only 4 reads and 4 writes from/to the array *
+\**********************************************************************/
+
+#define NANO_SORT_2  SORT_MAKE_STR(nano_sort_2)
+static __inline void NANO_SORT_2(SORT_TYPE *data) {
+  SORT_TYPE item_0 = data[0];
+  SORT_TYPE item_1 = data[1];
+  if (SORT_CMP(item_0, item_1) > 0) {
+    data[0] = item_1;
+    data[1] = item_0;
+  }
+}
+
+/**********************************************************************\
+ * Small sorts                                                        *
+ * "Small" means the functions are designed for a specific array size *
+ * Contain loops                                                      *
+\**********************************************************************/
+
+#define SMALL_MERGE_SORT  SORT_MAKE_STR(small_merge_sort)
+// Stable
+// O(N*logN) for size <= 2
+SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
+  switch (size) {
+    case 0:
+    case 1:
+      break;
+
+    case 2:
+      NANO_SORT_2(data);
+      break;
+
+    default: {
+      NANO_SORT_2(data);
+      BINARY_INSERTION_SORT_START(data, 2, size);
+    }
+  }
+}
+
+#define SMALL_MERGE_SORT_WRAP  SORT_MAKE_STR(small_merge_sort_wrap)
+// size should be <= 16
+SORT_DEF void SMALL_MERGE_SORT_WRAP(SORT_TYPE *data, const size_t size) {
+  SORT_TYPE tempBuf[16];
+
+  if (size <= 1) {
+    return;
+  }
+
+  SMALL_MERGE_SORT(data, tempBuf, size);
+}
+
+#define SMALL_MERGE_SORT_WRAP2  SORT_MAKE_STR(small_merge_sort_wrap2)
+SORT_DEF void SMALL_MERGE_SORT_WRAP2(SORT_TYPE *data, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  SMALL_MERGE_SORT(data, tempBuf, size);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 //sorts items in chunks of the array for subsequent bottom-up merging
 //chunkSize can be 2, 3 or 4
 //returns actual size of sorted chunks
@@ -555,6 +627,11 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef INSERT_SORT_15
 #undef INSERT_SORT_16
 #undef INSERT_SORT
+
+#undef NANO_SORT_2
+#undef SMALL_MERGE_SORT
+#undef SMALL_MERGE_SORT_WRAP
+#undef SMALL_MERGE_SORT_WRAP2
 
 #undef STABLE_PRESORT
 
