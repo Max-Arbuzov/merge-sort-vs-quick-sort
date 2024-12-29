@@ -19,6 +19,7 @@
 #define FAST_ITERATIONS 1
 #define SLOW_ITERATIONS 1
 #define SIZES 1
+#define SMALL_SIZE_LIMIT 50000
 
 size_t sizes[SIZES] = {100000};
 
@@ -37,7 +38,6 @@ static __inline double utime(void) {
 
 static void fill_random(int64_t *dst, const int size) {
   int i;
-  srand48(SEED);
 
   for (i = 0; i < size; i++) {
     dst[i] = lrand48();
@@ -87,6 +87,7 @@ void platform_name(char *output) {
     int64_t *dst = (int64_t *) malloc(sizeof(int64_t) * size); \
     diff = 0; \
     iter = 0; \
+    srand48(SEED); \
     while (1) { \
       fill_random(dst, size); \
       usec1 = utime(); \
@@ -111,6 +112,7 @@ void platform_name(char *output) {
     int64_t *dst = (int64_t *) malloc(sizeof(int64_t) * size); \
     diff = 0; \
     iter = 0; \
+    srand48(SEED); \
     while (1) { \
       fill_random(dst, size); \
       usec1 = utime(); \
@@ -128,6 +130,14 @@ void platform_name(char *output) {
   } \
 } while (0)
 
+static int allSmallSizes(const int limitSize) {
+  int i;
+  for (i = 0; i < SIZES; i++) {
+    if (sizes[i] > limitSize)
+      return 0;
+  }
+  return 1;
+}
 
 int main(void) {
   int test, iter;
@@ -138,6 +148,12 @@ int main(void) {
   \
   platform_name(platform);
   TEST_STDLIB(qsort);
+
+  if (allSmallSizes(SMALL_SIZE_LIMIT)) {
+    TEST_SORT_H(bitonic_sort);
+    TEST_SORT_H(binary_insertion_sort);
+    TEST_SORT_H(insert_sort);
+  }
 
   TEST_SORT_H(quick_sort);
   TEST_SORT_H(merge_sort);
