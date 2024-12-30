@@ -76,6 +76,35 @@ static __inline void MERGE_ITEMS_2_2(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYP
   }
 }
 
+// merges (3 items) + (1 item) - > 4
+#define MERGE_ITEMS_3_1  SORT_MAKE_STR(merge_items_3_1)
+static __inline void MERGE_ITEMS_3_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE left_1, SORT_TYPE left_2, SORT_TYPE right_0) {
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    dest[1] = left_0;
+    dest[2] = left_1;
+    dest[3] = left_2;
+  } else {
+    dest[0] = left_0;
+    MERGE_ITEMS_2_1(&dest[1], left_1, left_2, right_0);
+  }
+}
+
+// merges adjacent 3 + 2 -> 5
+#define MERGE_3_2  SORT_MAKE_STR(merge_3_2)
+static __inline void MERGE_3_2(SORT_TYPE *dest, SORT_TYPE *source) {
+  SORT_TYPE item_0 = source[0];
+  SORT_TYPE item_3 = source[3];
+  SORT_TYPE item_4 = source[4];
+  if (SORT_CMP(item_0, item_3) > 0) {
+    dest[0] = item_3;
+    MERGE_ITEMS_3_1(&dest[1], item_0, source[1], source[2], item_4);
+  } else {
+    dest[0] = item_0;
+    MERGE_ITEMS_2_2(&dest[1], source[1], source[2], item_3, item_4);
+  }
+}
+
 // sorted size is 0 before call and 1 after
 // data[0] has no data before call
 #define INSERT_INTO_SORTED_1  SORT_MAKE_STR(insert_into_sorted_1)
@@ -505,6 +534,12 @@ SORT_DEF void INSERT_SORT(SORT_TYPE *data, const size_t size) {
 \**********************************************************************/
 
 // "dest" and "source" can be the same
+#define NANO_SORT_MOVE_2  SORT_MAKE_STR(nano_sort_move_2)
+static __inline void NANO_SORT_MOVE_2(SORT_TYPE *dest, SORT_TYPE *source) {
+  MERGE_ITEMS_1_1(dest, source[0], source[1]);
+}
+
+// "dest" and "source" can be the same
 #define NANO_SORT_MOVE_3  SORT_MAKE_STR(nano_sort_move_3)
 static __inline void NANO_SORT_MOVE_3(SORT_TYPE *dest, SORT_TYPE *source) {
   SORT_TYPE item_0 = source[0];
@@ -606,6 +641,19 @@ static __inline void NANO_SORT_4(SORT_TYPE *data) {
   NANO_SORT_MOVE_4(data, data);
 }
 
+/****************************************************\
+ * Micro sorts                                      *
+ * "Micro" means the functions do not contain loops *
+\****************************************************/
+
+#define MICRO_MERGE_SORT_5  SORT_MAKE_STR(micro_merge_sort_5)
+static __inline void MICRO_MERGE_SORT_5(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_3(temp, data);
+  NANO_SORT_MOVE_2(&temp[3], &data[3]);
+
+  MERGE_3_2(data, temp);
+}
+
 /**********************************************************************\
  * Small sorts                                                        *
  * "Small" means the functions are designed for a specific array size *
@@ -614,7 +662,7 @@ static __inline void NANO_SORT_4(SORT_TYPE *data) {
 
 #define SMALL_MERGE_SORT  SORT_MAKE_STR(small_merge_sort)
 // Stable
-// O(N*logN) for size <= 4
+// O(N*logN) for size <= 5
 SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
   switch (size) {
     case 0:
@@ -633,9 +681,13 @@ SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t si
       NANO_SORT_4(data);
       break;
 
+    case 5:
+      MICRO_MERGE_SORT_5(data, temp);
+      break;
+
     default: {
-      NANO_SORT_4(data);
-      BINARY_INSERTION_SORT_START(data, 4, size);
+      MICRO_MERGE_SORT_5(data, temp);
+      BINARY_INSERTION_SORT_START(data, 5, size);
     }
   }
 }
@@ -746,6 +798,8 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef MERGE_ITEMS_1_2
 #undef MERGE_ITEMS_2_1
 #undef MERGE_ITEMS_2_2
+#undef MERGE_ITEMS_3_1
+#undef MERGE_3_2
 
 #undef INSERT_INTO_SORTED_1
 #undef INSERT_INTO_SORTED_2
@@ -782,12 +836,14 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef INSERT_SORT_16
 #undef INSERT_SORT
 
+#undef NANO_SORT_MOVE_2
 #undef NANO_SORT_MOVE_3
 #undef NANO_SORT_MOVE_4
 #undef NANO_SORT_2
 #undef NANO_SORT_3_DEMO
 #undef NANO_SORT_3
 #undef NANO_SORT_4
+#undef MICRO_MERGE_SORT_5
 #undef SMALL_MERGE_SORT
 #undef SMALL_MERGE_SORT_WRAP
 #undef SMALL_MERGE_SORT_WRAP2
