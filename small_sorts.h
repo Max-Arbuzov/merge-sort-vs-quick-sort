@@ -38,6 +38,19 @@ static __inline void MERGE_ITEMS_1_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYP
   }
 }
 
+// merges (1 item) + (2 items) - > 3
+#define MERGE_ITEMS_1_2  SORT_MAKE_STR(merge_items_1_2)
+static __inline void MERGE_ITEMS_1_2(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE right_0, SORT_TYPE right_1) {
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_ITEMS_1_1(&dest[1], left_0, right_1);
+  } else {
+    dest[0] = left_0;
+    dest[1] = right_0;
+    dest[2] = right_1;
+  }
+}
+
 // merges (2 items) + (1 item) - > 3
 #define MERGE_ITEMS_2_1  SORT_MAKE_STR(merge_items_2_1)
 static __inline void MERGE_ITEMS_2_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE left_1, SORT_TYPE right_0) {
@@ -48,6 +61,18 @@ static __inline void MERGE_ITEMS_2_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYP
   } else {
     dest[0] = left_0;
     MERGE_ITEMS_1_1(&dest[1], left_1, right_0);
+  }
+}
+
+// merges (2 items) + (2 items) - > 4
+#define MERGE_ITEMS_2_2  SORT_MAKE_STR(merge_items_2_2)
+static __inline void MERGE_ITEMS_2_2(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE left_1, SORT_TYPE right_0, SORT_TYPE right_1) {
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_ITEMS_2_1(&dest[1], left_0, left_1, right_1);
+  } else {
+    dest[0] = left_0;
+    MERGE_ITEMS_1_2(&dest[1], left_1, right_0, right_1);
   }
 }
 
@@ -493,6 +518,29 @@ static __inline void NANO_SORT_MOVE_3(SORT_TYPE *dest, SORT_TYPE *source) {
   }
 }
 
+// "dest" and "source" can be the same
+#define NANO_SORT_MOVE_4  SORT_MAKE_STR(nano_sort_move_4)
+static __inline void NANO_SORT_MOVE_4(SORT_TYPE *dest, SORT_TYPE *source) {
+  SORT_TYPE item_0 = source[0];
+  SORT_TYPE item_1 = source[1];
+  SORT_TYPE item_2 = source[2];
+  SORT_TYPE item_3 = source[3];
+
+  if (SORT_CMP(item_0, item_1) > 0) {
+    if (SORT_CMP(item_2, item_3) > 0) {
+      MERGE_ITEMS_2_2(dest, item_1, item_0, item_3, item_2);
+    } else {
+      MERGE_ITEMS_2_2(dest, item_1, item_0, item_2, item_3);
+    }
+  } else {
+    if (SORT_CMP(item_2, item_3) > 0) {
+      MERGE_ITEMS_2_2(dest, item_0, item_1, item_3, item_2);
+    } else {
+      MERGE_ITEMS_2_2(dest, item_0, item_1, item_2, item_3);
+    }
+  }
+}
+
 #define NANO_SORT_2  SORT_MAKE_STR(nano_sort_2)
 static __inline void NANO_SORT_2(SORT_TYPE *data) {
   SORT_TYPE item_0 = data[0];
@@ -553,6 +601,11 @@ static __inline void NANO_SORT_3(SORT_TYPE *data) {
   NANO_SORT_MOVE_3(data, data);
 }
 
+#define NANO_SORT_4  SORT_MAKE_STR(nano_sort_4)
+static __inline void NANO_SORT_4(SORT_TYPE *data) {
+  NANO_SORT_MOVE_4(data, data);
+}
+
 /**********************************************************************\
  * Small sorts                                                        *
  * "Small" means the functions are designed for a specific array size *
@@ -561,7 +614,7 @@ static __inline void NANO_SORT_3(SORT_TYPE *data) {
 
 #define SMALL_MERGE_SORT  SORT_MAKE_STR(small_merge_sort)
 // Stable
-// O(N*logN) for size <= 3
+// O(N*logN) for size <= 4
 SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
   switch (size) {
     case 0:
@@ -576,9 +629,13 @@ SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t si
       NANO_SORT_3(data);
       break;
 
+    case 4:
+      NANO_SORT_4(data);
+      break;
+
     default: {
-      NANO_SORT_3(data);
-      BINARY_INSERTION_SORT_START(data, 3, size);
+      NANO_SORT_4(data);
+      BINARY_INSERTION_SORT_START(data, 4, size);
     }
   }
 }
@@ -686,7 +743,9 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 
 #undef MERGE_CHUNK_INPLACE
 #undef MERGE_ITEMS_1_1
+#undef MERGE_ITEMS_1_2
 #undef MERGE_ITEMS_2_1
+#undef MERGE_ITEMS_2_2
 
 #undef INSERT_INTO_SORTED_1
 #undef INSERT_INTO_SORTED_2
@@ -724,9 +783,11 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef INSERT_SORT
 
 #undef NANO_SORT_MOVE_3
+#undef NANO_SORT_MOVE_4
 #undef NANO_SORT_2
 #undef NANO_SORT_3_DEMO
 #undef NANO_SORT_3
+#undef NANO_SORT_4
 #undef SMALL_MERGE_SORT
 #undef SMALL_MERGE_SORT_WRAP
 #undef SMALL_MERGE_SORT_WRAP2
