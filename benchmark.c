@@ -153,6 +153,7 @@ int main(void) {
     TEST_SORT_H(bitonic_sort);
     TEST_SORT_H(binary_insertion_sort);
     TEST_SORT_H(insert_sort);
+    TEST_SORT_H(small_merge_sort_lessloops_wrap);
     TEST_SORT_H(small_merge_sort_wrap);
     TEST_SORT_H(small_merge_sort_wrap2);
   }

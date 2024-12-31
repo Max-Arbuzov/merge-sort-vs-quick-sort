@@ -260,6 +260,7 @@ int run_tests(int64_t *sizes, int sizes_cnt, int type) {
     TEST_SORT_H(bitonic_sort);
     TEST_SORT_H(insert_sort);
     TEST_SORT_H(merge_sort_small);
+    TEST_SORT_H(small_merge_sort_lessloops_wrap);
     TEST_SORT_H(small_merge_sort_wrap);
     TEST_SORT_H(small_merge_sort_wrap2);
   }
