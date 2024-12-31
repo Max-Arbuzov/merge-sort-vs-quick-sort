@@ -64,6 +64,20 @@ static __inline void MERGE_ITEMS_2_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYP
   }
 }
 
+// merges (1 item) + (3 items) - > 4
+#define MERGE_ITEMS_1_3  SORT_MAKE_STR(merge_items_1_3)
+static __inline void MERGE_ITEMS_1_3(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE right_0, SORT_TYPE right_1, SORT_TYPE right_2) {
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_ITEMS_1_2(&dest[1], left_0, right_1, right_2);
+  } else {
+    dest[0] = left_0;
+    dest[1] = right_0;
+    dest[2] = right_1;
+    dest[3] = right_2;
+  }
+}
+
 // merges (2 items) + (2 items) - > 4
 #define MERGE_ITEMS_2_2  SORT_MAKE_STR(merge_items_2_2)
 static __inline void MERGE_ITEMS_2_2(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE left_1, SORT_TYPE right_0, SORT_TYPE right_1) {
@@ -90,18 +104,59 @@ static __inline void MERGE_ITEMS_3_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYP
   }
 }
 
+// merges not adjacent 3 + 2 -> 5
+#define MERGE_NA_3_2  SORT_MAKE_STR(merge_na_3_2)
+static __inline void MERGE_NA_3_2(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE *right) {
+  SORT_TYPE left_0 = left[0];
+  SORT_TYPE right_0 = right[0];
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_ITEMS_3_1(&dest[1], left_0, left[1], left[2], right[1]);
+  } else {
+    dest[0] = left_0;
+    MERGE_ITEMS_2_2(&dest[1], left[1], left[2], right_0, right[1]);
+  }
+}
+
+// merges adjacent 2 + 3 -> 5
+#define MERGE_2_3  SORT_MAKE_STR(merge_2_3)
+static __inline void MERGE_2_3(SORT_TYPE *dest, SORT_TYPE *source) {
+  SORT_TYPE item_0 = source[0];
+  SORT_TYPE item_2 = source[2];
+  if (SORT_CMP(item_0, item_2) > 0) {
+    dest[0] = item_2;
+    MERGE_ITEMS_2_2(&dest[1], item_0, source[1], source[3], source[4]);
+  } else {
+    dest[0] = item_0;
+    MERGE_ITEMS_1_3(&dest[1], source[1], item_2, source[3], source[4]);
+  }
+}
+
 // merges adjacent 3 + 2 -> 5
 #define MERGE_3_2  SORT_MAKE_STR(merge_3_2)
 static __inline void MERGE_3_2(SORT_TYPE *dest, SORT_TYPE *source) {
   SORT_TYPE item_0 = source[0];
   SORT_TYPE item_3 = source[3];
-  SORT_TYPE item_4 = source[4];
   if (SORT_CMP(item_0, item_3) > 0) {
     dest[0] = item_3;
-    MERGE_ITEMS_3_1(&dest[1], item_0, source[1], source[2], item_4);
+    MERGE_ITEMS_3_1(&dest[1], item_0, source[1], source[2], source[4]);
   } else {
     dest[0] = item_0;
-    MERGE_ITEMS_2_2(&dest[1], source[1], source[2], item_3, item_4);
+    MERGE_ITEMS_2_2(&dest[1], source[1], source[2], item_3, source[4]);
+  }
+}
+
+// merges adjacent 3 + 3 -> 6
+#define MERGE_3_3  SORT_MAKE_STR(merge_3_3)
+static __inline void MERGE_3_3(SORT_TYPE *dest, SORT_TYPE *source) {
+  SORT_TYPE item_0 = source[0];
+  SORT_TYPE item_3 = source[3];
+  if (SORT_CMP(item_0, item_3) > 0) {
+    dest[0] = item_3;
+    MERGE_NA_3_2(&dest[1], source, &source[4]);
+  } else {
+    dest[0] = item_0;
+    MERGE_2_3(&dest[1], &source[1]);
   }
 }
 
@@ -654,6 +709,14 @@ static __inline void MICRO_MERGE_SORT_5(SORT_TYPE *data, SORT_TYPE *temp) {
   MERGE_3_2(data, temp);
 }
 
+#define MICRO_MERGE_SORT_6  SORT_MAKE_STR(micro_merge_sort_6)
+static __inline void MICRO_MERGE_SORT_6(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_3(temp, data);
+  NANO_SORT_MOVE_3(&temp[3], &data[3]);
+
+  MERGE_3_3(data, temp);
+}
+
 /**********************************************************************\
  * Small sorts                                                        *
  * "Small" means the functions are designed for a specific array size *
@@ -662,7 +725,7 @@ static __inline void MICRO_MERGE_SORT_5(SORT_TYPE *data, SORT_TYPE *temp) {
 
 #define SMALL_MERGE_SORT  SORT_MAKE_STR(small_merge_sort)
 // Stable
-// O(N*logN) for size <= 5
+// O(N*logN) for size <= 6
 SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
   switch (size) {
     case 0:
@@ -685,9 +748,13 @@ SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t si
       MICRO_MERGE_SORT_5(data, temp);
       break;
 
+    case 6:
+      MICRO_MERGE_SORT_6(data, temp);
+      break;
+
     default: {
-      MICRO_MERGE_SORT_5(data, temp);
-      BINARY_INSERTION_SORT_START(data, 5, size);
+      MICRO_MERGE_SORT_6(data, temp);
+      BINARY_INSERTION_SORT_START(data, 6, size);
     }
   }
 }
@@ -797,9 +864,13 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef MERGE_ITEMS_1_1
 #undef MERGE_ITEMS_1_2
 #undef MERGE_ITEMS_2_1
+#undef MERGE_ITEMS_1_3
 #undef MERGE_ITEMS_2_2
 #undef MERGE_ITEMS_3_1
+#undef MERGE_NA_3_2
+#undef MERGE_2_3
 #undef MERGE_3_2
+#undef MERGE_3_3
 
 #undef INSERT_INTO_SORTED_1
 #undef INSERT_INTO_SORTED_2
@@ -844,6 +915,7 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef NANO_SORT_3
 #undef NANO_SORT_4
 #undef MICRO_MERGE_SORT_5
+#undef MICRO_MERGE_SORT_6
 #undef SMALL_MERGE_SORT
 #undef SMALL_MERGE_SORT_WRAP
 #undef SMALL_MERGE_SORT_WRAP2
