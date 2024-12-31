@@ -129,6 +129,22 @@ static __inline void MERGE_ITEMS_3_1(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYP
   }
 }
 
+// merges 4 + (1 item) -> 5
+#define MERGE_4_ITEM  SORT_MAKE_STR(merge_4_item)
+static __inline void MERGE_4_ITEM(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE right_0) {
+  SORT_TYPE left_0 = left[0];
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    dest[1] = left_0;
+    dest[2] = left[1];
+    dest[3] = left[2];
+    dest[4] = left[3];
+  } else {
+    dest[0] = left_0;
+    MERGE_ITEMS_3_1(&dest[1], left[1], left[2], left[3], right_0);
+  }
+}
+
 // merges not adjacent 3 + 2 -> 5
 #define MERGE_NA_3_2  SORT_MAKE_STR(merge_na_3_2)
 static __inline void MERGE_NA_3_2(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE *right) {
@@ -140,6 +156,20 @@ static __inline void MERGE_NA_3_2(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE *r
   } else {
     dest[0] = left_0;
     MERGE_ITEMS_2_2(&dest[1], left[1], left[2], right_0, right[1]);
+  }
+}
+
+// merges not adjacent 4 + 2 -> 6
+#define MERGE_NA_4_2  SORT_MAKE_STR(merge_na_4_2)
+static __inline void MERGE_NA_4_2(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE *right) {
+  SORT_TYPE left_0 = left[0];
+  SORT_TYPE right_0 = right[0];
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_4_ITEM(&dest[1], left, right[1]);
+  } else {
+    dest[0] = left_0;
+    MERGE_NA_3_2(&dest[1], &left[1], right);
   }
 }
 
@@ -182,6 +212,20 @@ static __inline void MERGE_3_3(SORT_TYPE *dest, SORT_TYPE *source) {
   } else {
     dest[0] = item_0;
     MERGE_2_3(&dest[1], &source[1]);
+  }
+}
+
+// merges adjacent 4 + 3 -> 7
+#define MERGE_4_3  SORT_MAKE_STR(merge_4_3)
+static __inline void MERGE_4_3(SORT_TYPE *dest, SORT_TYPE *source) {
+  SORT_TYPE item_0 = source[0];
+  SORT_TYPE item_4 = source[4];
+  if (SORT_CMP(item_0, item_4) > 0) {
+    dest[0] = item_4;
+    MERGE_NA_4_2(&dest[1], source, &source[5]);
+  } else {
+    dest[0] = item_0;
+    MERGE_3_3(&dest[1], &source[1]);
   }
 }
 
@@ -742,6 +786,14 @@ static __inline void MICRO_MERGE_SORT_6(SORT_TYPE *data, SORT_TYPE *temp) {
   MERGE_3_3(data, temp);
 }
 
+#define MICRO_MERGE_SORT_7  SORT_MAKE_STR(micro_merge_sort_7)
+static __inline void MICRO_MERGE_SORT_7(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_4(temp, data);
+  NANO_SORT_MOVE_3(&temp[4], &data[4]);
+
+  MERGE_4_3(data, temp);
+}
+
 /**********************************************************************\
  * Small sorts                                                        *
  * "Small" means the functions are designed for a specific array size *
@@ -784,9 +836,13 @@ SORT_DEF void SMALL_MERGE_SORT_LESSLOOPS(SORT_TYPE *data, SORT_TYPE *temp, const
       MICRO_MERGE_SORT_6(data, temp);
       break;
 
+    case 7:
+      MICRO_MERGE_SORT_7(data, temp);
+      break;
+
     default: {
-      MICRO_MERGE_SORT_6(data, temp);
-      BINARY_INSERTION_SORT_START(data, 6, size);
+      MICRO_MERGE_SORT_7(data, temp);
+      BINARY_INSERTION_SORT_START(data, 7, size);
     }
   }
 }
@@ -949,10 +1005,13 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef MERGE_ITEMS_1_3
 #undef MERGE_ITEMS_2_2
 #undef MERGE_ITEMS_3_1
+#undef MERGE_4_ITEM
 #undef MERGE_NA_3_2
+#undef MERGE_NA_4_2
 #undef MERGE_2_3
 #undef MERGE_3_2
 #undef MERGE_3_3
+#undef MERGE_4_3
 
 #undef INSERT_INTO_SORTED_1
 #undef INSERT_INTO_SORTED_2
@@ -998,6 +1057,7 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef NANO_SORT_4
 #undef MICRO_MERGE_SORT_5
 #undef MICRO_MERGE_SORT_6
+#undef MICRO_MERGE_SORT_7
 #undef SMALL_MERGE_SORT_6
 #undef SMALL_MERGE_SORT_LESSLOOPS
 #undef SMALL_MERGE_SORT
