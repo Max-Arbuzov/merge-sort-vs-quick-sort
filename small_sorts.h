@@ -145,59 +145,43 @@ static __inline void MERGE_4_ITEM(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE ri
   }
 }
 
-// merges not adjacent 3 + 2 -> 5
-#define MERGE_NA_3_2  SORT_MAKE_STR(merge_na_3_2)
-static __inline void MERGE_NA_3_2(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE *right) {
+// merges [3] + (2 items) -> [5]
+#define MERGE_3_2ITEMS  SORT_MAKE_STR(merge_3_2items)
+static __inline void MERGE_3_2ITEMS(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE right_0, SORT_TYPE right_1) {
   SORT_TYPE left_0 = left[0];
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_ITEMS_3_1(&dest[1], left_0, left[1], left[2], right_1);
+  } else {
+    dest[0] = left_0;
+    MERGE_ITEMS_2_2(&dest[1], left[1], left[2], right_0, right_1);
+  }
+}
+
+// merges [4] + (2 items) -> [6]
+#define MERGE_4_2ITEMS  SORT_MAKE_STR(merge_4_2items)
+static __inline void MERGE_4_2ITEMS(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE right_0, SORT_TYPE right_1) {
+  SORT_TYPE left_0 = left[0];
+  if (SORT_CMP(left_0, right_0) > 0) {
+    dest[0] = right_0;
+    MERGE_4_ITEM(&dest[1], left, right_1);
+  } else {
+    dest[0] = left_0;
+    MERGE_3_2ITEMS(&dest[1], &left[1], right_0, right_1);
+  }
+}
+
+// merges (2 items) + [3] -> [5]
+#define MERGE_2ITEMS_3  SORT_MAKE_STR(merge_2items_3)
+static __inline void MERGE_2ITEMS_3(SORT_TYPE *dest, SORT_TYPE left_0, SORT_TYPE left_1, SORT_TYPE *right) {
+////for TortoiseMerge
   SORT_TYPE right_0 = right[0];
   if (SORT_CMP(left_0, right_0) > 0) {
     dest[0] = right_0;
-    MERGE_ITEMS_3_1(&dest[1], left_0, left[1], left[2], right[1]);
+    MERGE_ITEMS_2_2(&dest[1], left_0, left_1, right[1], right[2]);
   } else {
     dest[0] = left_0;
-    MERGE_ITEMS_2_2(&dest[1], left[1], left[2], right_0, right[1]);
-  }
-}
-
-// merges not adjacent 4 + 2 -> 6
-#define MERGE_NA_4_2  SORT_MAKE_STR(merge_na_4_2)
-static __inline void MERGE_NA_4_2(SORT_TYPE *dest, SORT_TYPE *left, SORT_TYPE *right) {
-  SORT_TYPE left_0 = left[0];
-  SORT_TYPE right_0 = right[0];
-  if (SORT_CMP(left_0, right_0) > 0) {
-    dest[0] = right_0;
-    MERGE_4_ITEM(&dest[1], left, right[1]);
-  } else {
-    dest[0] = left_0;
-    MERGE_NA_3_2(&dest[1], &left[1], right);
-  }
-}
-
-// merges adjacent 2 + 3 -> 5
-#define MERGE_2_3  SORT_MAKE_STR(merge_2_3)
-static __inline void MERGE_2_3(SORT_TYPE *dest, SORT_TYPE *source) {
-  SORT_TYPE item_0 = source[0];
-  SORT_TYPE item_2 = source[2];
-  if (SORT_CMP(item_0, item_2) > 0) {
-    dest[0] = item_2;
-    MERGE_ITEMS_2_2(&dest[1], item_0, source[1], source[3], source[4]);
-  } else {
-    dest[0] = item_0;
-    MERGE_ITEMS_1_3(&dest[1], source[1], item_2, source[3], source[4]);
-  }
-}
-
-// merges adjacent 3 + 2 -> 5
-#define MERGE_3_2  SORT_MAKE_STR(merge_3_2)
-static __inline void MERGE_3_2(SORT_TYPE *dest, SORT_TYPE *source) {
-  SORT_TYPE item_0 = source[0];
-  SORT_TYPE item_3 = source[3];
-  if (SORT_CMP(item_0, item_3) > 0) {
-    dest[0] = item_3;
-    MERGE_ITEMS_3_1(&dest[1], item_0, source[1], source[2], source[4]);
-  } else {
-    dest[0] = item_0;
-    MERGE_ITEMS_2_2(&dest[1], source[1], source[2], item_3, source[4]);
+    MERGE_ITEMS_1_3(&dest[1], left_1, right_0, right[1], right[2]);
   }
 }
 
@@ -208,10 +192,10 @@ static __inline void MERGE_3_3(SORT_TYPE *dest, SORT_TYPE *source) {
   SORT_TYPE item_3 = source[3];
   if (SORT_CMP(item_0, item_3) > 0) {
     dest[0] = item_3;
-    MERGE_NA_3_2(&dest[1], source, &source[4]);
+    MERGE_3_2ITEMS(&dest[1], source, source[4], source[5]);
   } else {
     dest[0] = item_0;
-    MERGE_2_3(&dest[1], &source[1]);
+    MERGE_2ITEMS_3(&dest[1], source[1], source[2], &source[3]);
   }
 }
 
@@ -222,7 +206,7 @@ static __inline void MERGE_4_3(SORT_TYPE *dest, SORT_TYPE *source) {
   SORT_TYPE item_4 = source[4];
   if (SORT_CMP(item_0, item_4) > 0) {
     dest[0] = item_4;
-    MERGE_NA_4_2(&dest[1], source, &source[5]);
+    MERGE_4_2ITEMS(&dest[1], source, source[5], source[6]);
   } else {
     dest[0] = item_0;
     MERGE_3_3(&dest[1], &source[1]);
@@ -772,10 +756,15 @@ static __inline void NANO_SORT_4(SORT_TYPE *data) {
 
 #define MICRO_MERGE_SORT_5  SORT_MAKE_STR(micro_merge_sort_5)
 static __inline void MICRO_MERGE_SORT_5(SORT_TYPE *data, SORT_TYPE *temp) {
-  NANO_SORT_MOVE_3(temp, data);
-  NANO_SORT_MOVE_2(&temp[3], &data[3]);
+  SORT_TYPE item_0 = data[0];
+  SORT_TYPE item_1 = data[1];
+  NANO_SORT_MOVE_3(&temp[2], &data[2]);
 
-  MERGE_3_2(data, temp);
+  if (SORT_CMP(item_0, item_1) > 0) {
+    MERGE_2ITEMS_3(data, item_1, item_0, &temp[2]);
+  } else {
+    MERGE_2ITEMS_3(data, item_0, item_1, &temp[2]);
+  }
 }
 
 #define MICRO_MERGE_SORT_6  SORT_MAKE_STR(micro_merge_sort_6)
@@ -1006,10 +995,9 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef MERGE_ITEMS_2_2
 #undef MERGE_ITEMS_3_1
 #undef MERGE_4_ITEM
-#undef MERGE_NA_3_2
-#undef MERGE_NA_4_2
-#undef MERGE_2_3
-#undef MERGE_3_2
+#undef MERGE_3_2ITEMS
+#undef MERGE_4_2ITEMS
+#undef MERGE_2ITEMS_3
 #undef MERGE_3_3
 #undef MERGE_4_3
 
