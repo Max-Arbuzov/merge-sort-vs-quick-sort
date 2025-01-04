@@ -6,21 +6,31 @@
  * Merging functions *
 \*********************/
 
-// standard merge arrays
+// improved standard merge arrays
 // merges two adjacent parts of the array
+// params MUST be: 0 < sizeLeft < size
 #define MERGE_ARRAY_STD  SORT_MAKE_STR(merge_array_std)
 static __inline void MERGE_ARRAY_STD(SORT_TYPE *dest, SORT_TYPE *source, size_t sizeLeft, size_t size) {
   size_t i = 0;
   size_t j = sizeLeft;
   size_t out = 0;
+  SORT_TYPE leftItem = source[i];
+  SORT_TYPE rightItem = source[j];
 
-  while ((i < sizeLeft) && (j < size)) {
-    if (SORT_CMP(source[i], source[j]) > 0) {
-      dest[out] = source[j++];
+  while (1) {
+    if (SORT_CMP(leftItem, rightItem) > 0) {
+      dest[out++] = rightItem;
+      ++j;
+      if (j >= size)
+        break;
+      rightItem = source[j];
     } else {
-      dest[out] = source[i++];
+      dest[out++] = leftItem;
+      ++i;
+      if (i >= sizeLeft)
+        break;
+      leftItem = source[i];
     }
-    ++out;
   }
 
   while (i < sizeLeft) {
@@ -921,6 +931,30 @@ static __inline void SMALL_MERGE_SORT_8(SORT_TYPE *data, SORT_TYPE *temp) {
   MERGE_ARRAY_STD(data, temp, 4, 8);
 }
 
+#define SMALL_MERGE_SORT_9  SORT_MAKE_STR(small_merge_sort_9)
+static __inline void SMALL_MERGE_SORT_9(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_4(temp, data);
+
+  NANO_SORT_2(&data[4]);
+  NANO_SORT_3(&data[6]);
+  MERGE_2ITEMS_3(&temp[4], data[4], data[5], &data[6]);
+
+  MERGE_ARRAY_STD(data, temp, 4, 9);
+}
+
+#define SMALL_MERGE_SORT_10  SORT_MAKE_STR(small_merge_sort_10)
+static __inline void SMALL_MERGE_SORT_10(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_2(data);
+  NANO_SORT_3(&data[2]);
+  MERGE_2ITEMS_3(temp, data[0], data[1], &data[2]);
+
+  NANO_SORT_2(&data[5]);
+  NANO_SORT_3(&data[7]);
+  MERGE_2ITEMS_3(&temp[5], data[5], data[6], &data[7]);
+
+  MERGE_ARRAY_STD(data, temp, 5, 10);
+}
+
 // similar to SMALL_MERGE_SORT but contains less loops
 #define SMALL_MERGE_SORT_LESSLOOPS  SORT_MAKE_STR(small_merge_sort_lessloops)
 SORT_DEF void SMALL_MERGE_SORT_LESSLOOPS(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
@@ -957,9 +991,17 @@ SORT_DEF void SMALL_MERGE_SORT_LESSLOOPS(SORT_TYPE *data, SORT_TYPE *temp, const
       MICRO_MERGE_SORT_8(data, temp);
       break;
 
+    case 9:
+      SMALL_MERGE_SORT_9(data, temp);
+      break;
+
+    case 10:
+      SMALL_MERGE_SORT_10(data, temp);
+      break;
+
     default: {
-      MICRO_MERGE_SORT_8(data, temp);
-      BINARY_INSERTION_SORT_START(data, 8, size);
+      SMALL_MERGE_SORT_10(data, temp);
+      BINARY_INSERTION_SORT_START(data, 10, size);
     }
   }
 }
@@ -967,7 +1009,7 @@ SORT_DEF void SMALL_MERGE_SORT_LESSLOOPS(SORT_TYPE *data, SORT_TYPE *temp, const
 // similar to SMALL_MERGE_SORT_LESSLOOPS but contains more loops
 #define SMALL_MERGE_SORT  SORT_MAKE_STR(small_merge_sort)
 // Stable
-// O(N*logN) for size <= 8
+// O(N*logN) for size <= 10
 SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
   switch (size) {
     case 0:
@@ -1002,9 +1044,17 @@ SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t si
       SMALL_MERGE_SORT_8(data, temp);
       break;
 
+    case 9:
+      SMALL_MERGE_SORT_9(data, temp);
+      break;
+
+    case 10:
+      SMALL_MERGE_SORT_10(data, temp);
+      break;
+
     default: {
-      SMALL_MERGE_SORT_8(data, temp);
-      BINARY_INSERTION_SORT_START(data, 8, size);
+      SMALL_MERGE_SORT_10(data, temp);
+      BINARY_INSERTION_SORT_START(data, 10, size);
     }
   }
 }
@@ -1194,6 +1244,8 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef SMALL_MERGE_SORT_6
 #undef SMALL_MERGE_SORT_7
 #undef SMALL_MERGE_SORT_8
+#undef SMALL_MERGE_SORT_9
+#undef SMALL_MERGE_SORT_10
 #undef SMALL_MERGE_SORT_LESSLOOPS
 #undef SMALL_MERGE_SORT
 #undef SMALL_MERGE_SORT_LESSLOOPS_WRAP
