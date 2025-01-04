@@ -905,6 +905,22 @@ static __inline void SMALL_MERGE_SORT_6(SORT_TYPE *data, SORT_TYPE *temp) {
   MERGE_ARRAY_STD(data, temp, 3, 6);
 }
 
+#define SMALL_MERGE_SORT_7  SORT_MAKE_STR(small_merge_sort_7)
+static __inline void SMALL_MERGE_SORT_7(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_3(temp, data);
+  NANO_SORT_MOVE_4(&temp[3], &data[3]);
+
+  MERGE_ARRAY_STD(data, temp, 3, 7);
+}
+
+#define SMALL_MERGE_SORT_8  SORT_MAKE_STR(small_merge_sort_8)
+static __inline void SMALL_MERGE_SORT_8(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_4(temp, data);
+  NANO_SORT_MOVE_4(&temp[4], &data[4]);
+
+  MERGE_ARRAY_STD(data, temp, 4, 8);
+}
+
 // similar to SMALL_MERGE_SORT but contains less loops
 #define SMALL_MERGE_SORT_LESSLOOPS  SORT_MAKE_STR(small_merge_sort_lessloops)
 SORT_DEF void SMALL_MERGE_SORT_LESSLOOPS(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
@@ -951,7 +967,7 @@ SORT_DEF void SMALL_MERGE_SORT_LESSLOOPS(SORT_TYPE *data, SORT_TYPE *temp, const
 // similar to SMALL_MERGE_SORT_LESSLOOPS but contains more loops
 #define SMALL_MERGE_SORT  SORT_MAKE_STR(small_merge_sort)
 // Stable
-// O(N*logN) for size <= 6
+// O(N*logN) for size <= 8
 SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
   switch (size) {
     case 0:
@@ -978,9 +994,17 @@ SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t si
       SMALL_MERGE_SORT_6(data, temp);
       break;
 
+    case 7:
+      SMALL_MERGE_SORT_7(data, temp);
+      break;
+
+    case 8:
+      SMALL_MERGE_SORT_8(data, temp);
+      break;
+
     default: {
-      SMALL_MERGE_SORT_6(data, temp);
-      BINARY_INSERTION_SORT_START(data, 6, size);
+      SMALL_MERGE_SORT_8(data, temp);
+      BINARY_INSERTION_SORT_START(data, 8, size);
     }
   }
 }
@@ -1168,6 +1192,8 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef SMALL_MERGE_SORT_4
 #undef SMALL_MERGE_SORT_5
 #undef SMALL_MERGE_SORT_6
+#undef SMALL_MERGE_SORT_7
+#undef SMALL_MERGE_SORT_8
 #undef SMALL_MERGE_SORT_LESSLOOPS
 #undef SMALL_MERGE_SORT
 #undef SMALL_MERGE_SORT_LESSLOOPS_WRAP
