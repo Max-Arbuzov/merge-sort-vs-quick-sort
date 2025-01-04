@@ -881,6 +881,22 @@ static __inline void MICRO_MERGE_SORT_8(SORT_TYPE *data, SORT_TYPE *temp) {
  * Contain loops                                                      *
 \**********************************************************************/
 
+#define SMALL_MERGE_SORT_4  SORT_MAKE_STR(small_merge_sort_4)
+static __inline void SMALL_MERGE_SORT_4(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_2(temp, data);
+  NANO_SORT_MOVE_2(&temp[2], &data[2]);
+
+  MERGE_ARRAY_STD(data, temp, 2, 4);
+}
+
+#define SMALL_MERGE_SORT_5  SORT_MAKE_STR(small_merge_sort_5)
+static __inline void SMALL_MERGE_SORT_5(SORT_TYPE *data, SORT_TYPE *temp) {
+  NANO_SORT_MOVE_2(temp, data);
+  NANO_SORT_MOVE_3(&temp[2], &data[2]);
+
+  MERGE_ARRAY_STD(data, temp, 2, 5);
+}
+
 #define SMALL_MERGE_SORT_6  SORT_MAKE_STR(small_merge_sort_6)
 static __inline void SMALL_MERGE_SORT_6(SORT_TYPE *data, SORT_TYPE *temp) {
   NANO_SORT_MOVE_3(temp, data);
@@ -951,11 +967,11 @@ SORT_DEF void SMALL_MERGE_SORT(SORT_TYPE *data, SORT_TYPE *temp, const size_t si
       break;
 
     case 4:
-      NANO_SORT_4(data);
+      SMALL_MERGE_SORT_4(data, temp);
       break;
 
     case 5:
-      MICRO_MERGE_SORT_5(data, temp);
+      SMALL_MERGE_SORT_5(data, temp);
       break;
 
     case 6:
@@ -1149,6 +1165,8 @@ SORT_DEF void MERGE_SORT_SMALL_BALANCED(SORT_TYPE *data, const size_t size) {
 #undef MICRO_MERGE_SORT_6
 #undef MICRO_MERGE_SORT_7
 #undef MICRO_MERGE_SORT_8
+#undef SMALL_MERGE_SORT_4
+#undef SMALL_MERGE_SORT_5
 #undef SMALL_MERGE_SORT_6
 #undef SMALL_MERGE_SORT_LESSLOOPS
 #undef SMALL_MERGE_SORT
