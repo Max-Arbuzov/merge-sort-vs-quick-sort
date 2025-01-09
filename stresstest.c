@@ -281,6 +281,7 @@ int run_tests(int64_t *sizes, int sizes_cnt, int type) {
   TEST_SORT_H(merge_sort_smallmerge1);
   TEST_SORT_H(merge_sort_smallmerge2);
   TEST_SORT_H(merge_sort_smallmerge3);
+  TEST_SORT_H(merge_sort_withbreak);
   free(dst);
   return 0;
 }
@@ -391,6 +392,7 @@ void stable_tests(void) {
   check_stable("merge sort small merge 1", stable_merge_sort_smallmerge1, size, num_values);
   check_stable("merge sort small merge 2", stable_merge_sort_smallmerge2, size, num_values);
   check_stable("merge sort small merge 3", stable_merge_sort_smallmerge3, size, num_values);
+  check_stable("merge sort with break", stable_merge_sort_withbreak, size, num_values);
 }
 
 int main(void) {
