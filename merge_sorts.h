@@ -32,8 +32,10 @@
 #define MERGE_SORT_SMALLMERGE3                 SORT_MAKE_STR(merge_sort_smallmerge3)
 #define MERGE_SORT_SMALLMERGE3_RECURSIVE       SORT_MAKE_STR(merge_sort_smallmerge3_recursive)
 // studying different variants of loop conditions
-#define MERGE_SORT_WITHBREAK                   SORT_MAKE_STR(merge_sort_withbreak)
-#define MERGE_SORT_WITHBREAK_RECURSIVE         SORT_MAKE_STR(merge_sort_withbreak_recursive)
+#define MERGE_SORT_WITHBREAK                     SORT_MAKE_STR(merge_sort_withbreak)
+#define MERGE_SORT_WITHBREAK_RECURSIVE           SORT_MAKE_STR(merge_sort_withbreak_recursive)
+#define MERGE_SORT_ONECONDITIONUNSAFE            SORT_MAKE_STR(merge_sort_oneconditionunsafe)
+#define MERGE_SORT_ONECONDITIONUNSAFE_RECURSIVE  SORT_MAKE_STR(merge_sort_oneconditionunsafe_recursive)
 
 SORT_DEF void MERGE_SORT_STD(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_HALVED(SORT_TYPE *dst, const size_t size);
@@ -48,6 +50,7 @@ SORT_DEF void MERGE_SORT_SMALLMERGE1(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_SMALLMERGE2(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_SMALLMERGE3(SORT_TYPE *dst, const size_t size);
 SORT_DEF void MERGE_SORT_WITHBREAK(SORT_TYPE *dst, const size_t size);
+SORT_DEF void MERGE_SORT_ONECONDITIONUNSAFE(SORT_TYPE *dst, const size_t size);
 
 /***********************\
  * Standard merge sort *
@@ -751,6 +754,74 @@ SORT_DEF void MERGE_SORT_WITHBREAK(SORT_TYPE *dst, const size_t size) {
   SORT_DELETE_BUFFER(tempBuf);
 }
 
+/***************************************************************\
+ * Merge sort with single loop condition instead of double one *
+ * Unsafe version                                              *
+\***************************************************************/
+
+SORT_DEF void MERGE_SORT_ONECONDITIONUNSAFE_RECURSIVE(SORT_TYPE *data, SORT_TYPE *temp, const size_t size) {
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    SMALL_STABLE_SORT(data, size);
+    return;
+  }
+
+  const size_t middle = size >> 1;
+  MERGE_SORT_ONECONDITIONUNSAFE_RECURSIVE(data, temp, middle);
+  MERGE_SORT_ONECONDITIONUNSAFE_RECURSIVE(&data[middle], temp, size - middle);
+
+  size_t out = 0;
+  size_t i = 0;
+  size_t j = middle;
+  if (SORT_CMP(data[middle - 1], data[size - 1]) <= 0) {
+    while (i < middle) {
+      if (SORT_CMP(data[i], data[j]) <= 0) {
+        temp[out] = data[i++];
+      } else {
+        temp[out] = data[j++];
+      }
+      ++out;
+    }
+  } else {
+    while (j < size) {
+      if (SORT_CMP(data[i], data[j]) <= 0) {
+        temp[out] = data[i++];
+      } else {
+        temp[out] = data[j++];
+      }
+      ++out;
+    }
+  }
+  while (i < middle) {
+    temp[out++] = data[i++];
+  }
+  while (j < size) {
+    temp[out++] = data[j++];
+  }
+
+  SORT_TYPE_CPY(data, temp, size);
+}
+
+SORT_DEF void MERGE_SORT_ONECONDITIONUNSAFE(SORT_TYPE *dst, const size_t size) {
+  SORT_TYPE *tempBuf;
+
+  if (size <= 1) {
+    return;
+  }
+
+  if (size <= SMALL_SORT_BND) {
+    SMALL_STABLE_SORT(dst, size);
+    return;
+  }
+
+  tempBuf = SORT_NEW_BUFFER(size);
+  MERGE_SORT_ONECONDITIONUNSAFE_RECURSIVE(dst, tempBuf, size);
+  SORT_DELETE_BUFFER(tempBuf);
+}
+
 #undef MERGE_SORT_STD
 #undef MERGE_SORT_STD_RECURSIVE
 
@@ -781,3 +852,5 @@ SORT_DEF void MERGE_SORT_WITHBREAK(SORT_TYPE *dst, const size_t size) {
 
 #undef MERGE_SORT_WITHBREAK
 #undef MERGE_SORT_WITHBREAK_RECURSIVE
+#undef MERGE_SORT_ONECONDITIONUNSAFE
+#undef MERGE_SORT_ONECONDITIONUNSAFE_RECURSIVE

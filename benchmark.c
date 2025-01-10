@@ -174,6 +174,6 @@ int main(void) {
   TEST_SORT_H(merge_sort_smallmerge2);
   TEST_SORT_H(merge_sort_smallmerge3);
   TEST_SORT_H(merge_sort_withbreak);
-
+  TEST_SORT_H(merge_sort_oneconditionunsafe);
   return 0;
 }
